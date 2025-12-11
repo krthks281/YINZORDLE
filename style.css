@@ -1,3 +1,15 @@
+:root {
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --title-size: 2rem;
+    --tile-font-size: 1.8rem;
+    --primary-color: #667eea;
+    --bg-color: #1a1a2e;
+    --modal-win-color: #6aaa64;
+    --modal-lose-color: #c9b458;
+    --guessmate-jersey: #2c5aa0;
+    --guessmate-helmet: #2c5aa0;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -5,8 +17,8 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    font-family: var(--font-family);
+    background: linear-gradient(135deg, var(--bg-color) 0%, #16213e 50%, #0f3460 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -30,7 +42,7 @@ header {
 
 header h1 {
     color: #1a1a2e;
-    font-size: 2rem;
+    font-size: var(--title-size);
     margin-bottom: 5px;
 }
 
@@ -86,7 +98,7 @@ header h1 {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.8rem;
+    font-size: var(--tile-font-size);
     font-weight: bold;
     text-transform: uppercase;
     color: #1a1a2e;
@@ -208,7 +220,7 @@ header h1 {
     display: block;
     width: 100%;
     padding: 15px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 10px;
@@ -262,6 +274,973 @@ header h1 {
     font-size: 0.85rem;
     margin-left: 10px;
     flex: 1;
+}
+
+/* Admin Panel */
+.admin-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(26, 26, 46, 0.98);
+    border-radius: 16px;
+    padding: 25px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    border: 2px solid #667eea;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-header h3 {
+    color: #fff;
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.admin-close {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.admin-close:hover {
+    background: #c0392b;
+}
+
+.admin-word-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    overflow-y: auto;
+    max-height: 50vh;
+    padding: 10px 0;
+}
+
+.admin-word {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+}
+
+.admin-word.current-word {
+    background: #6aaa64;
+    font-weight: bold;
+}
+
+.admin-footer {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+/* Snowfall Animation */
+.snow-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999;
+    overflow: hidden;
+}
+
+.snowflake {
+    position: absolute;
+    top: -20px;
+    color: #fff;
+    text-shadow: 0 0 10px #fff, 0 0 20px #87ceeb, 0 0 30px #87ceeb, 0 0 40px #87ceeb;
+    animation: snowfall linear infinite, glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes snowfall {
+    0% {
+        transform: translateY(-20px) rotate(0deg);
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+    }
+}
+
+@keyframes glow {
+    0% {
+        text-shadow: 0 0 5px #fff, 0 0 10px #87ceeb, 0 0 15px #87ceeb;
+    }
+    100% {
+        text-shadow: 0 0 10px #fff, 0 0 20px #87ceeb, 0 0 30px #87ceeb, 0 0 40px #87ceeb;
+    }
+}
+
+/* Result Modal */
+.result-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.result-modal.show {
+    opacity: 1;
+}
+
+.result-content {
+    background: linear-gradient(145deg, #1e3a5f, #0d1f33);
+    border-radius: 24px;
+    padding: 40px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    transform: scale(0.8) translateY(20px);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.result-modal.show .result-content {
+    transform: scale(1) translateY(0);
+}
+
+.result-content.win {
+    border-color: #6aaa64;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(106, 170, 100, 0.3);
+}
+
+.result-content.lose {
+    border-color: #c9b458;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(201, 180, 88, 0.3);
+}
+
+/* 3D Character */
+.result-character {
+    margin-bottom: 20px;
+    animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.character-body {
+    width: 120px;
+    height: 150px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.character-head {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(145deg, #ffd93d, #f9c846);
+    border-radius: 50%;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), inset 0 -5px 15px rgba(0, 0, 0, 0.1);
+    border: 3px solid #e8b923;
+}
+
+.character-body.win .character-head {
+    animation: celebrate 0.5s ease infinite;
+}
+
+@keyframes celebrate {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+}
+
+.eye {
+    width: 12px;
+    height: 12px;
+    background: #333;
+    border-radius: 50%;
+    position: absolute;
+    top: 25px;
+}
+
+.eye.left { left: 18px; }
+.eye.right { right: 18px; }
+
+.character-body.win .eye {
+    height: 6px;
+    top: 28px;
+    border-radius: 10px 10px 0 0;
+}
+
+.mouth {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.mouth.happy {
+    width: 30px;
+    height: 15px;
+    border: 3px solid #333;
+    border-top: none;
+    border-radius: 0 0 30px 30px;
+    background: #ff6b6b;
+}
+
+.mouth.determined {
+    width: 25px;
+    height: 8px;
+    background: #333;
+    border-radius: 4px;
+}
+
+.character-arms {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+}
+
+.arm {
+    width: 15px;
+    height: 40px;
+    background: linear-gradient(145deg, #4a90d9, #357abd);
+    border-radius: 10px;
+    position: absolute;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.arm.left { left: 0; transform: rotate(20deg); }
+.arm.right { right: 0; transform: rotate(-20deg); }
+
+.arm.raised {
+    transform: rotate(-45deg);
+    animation: wave 0.5s ease infinite alternate;
+}
+
+.arm.left.raised { transform: rotate(-45deg); }
+.arm.right.raised { transform: rotate(45deg); animation-delay: 0.25s; }
+
+@keyframes wave {
+    0% { transform: rotate(-45deg); }
+    100% { transform: rotate(-60deg); }
+}
+
+.arm.fist {
+    transform: rotate(-20deg);
+}
+
+.hockey-stick {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) rotate(30deg);
+    width: 8px;
+    height: 70px;
+    background: linear-gradient(to bottom, #8b4513, #654321);
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.hockey-stick::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -10px;
+    width: 25px;
+    height: 12px;
+    background: linear-gradient(to right, #654321, #8b4513);
+    border-radius: 5px;
+}
+
+/* Result Message */
+.result-message h2 {
+    color: #fff;
+    font-size: 2rem;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.result-content.win .result-message h2 {
+    color: #6aaa64;
+}
+
+.result-content.lose .result-message h2 {
+    color: #c9b458;
+}
+
+.result-message p {
+    color: #ddd;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+.result-message .sub-message {
+    color: #999;
+    font-size: 0.95rem;
+    font-style: italic;
+}
+
+.result-message strong {
+    color: #fff;
+    font-size: 1.3rem;
+    letter-spacing: 3px;
+}
+
+/* Play Again Button */
+.play-again-btn {
+    margin-top: 25px;
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.play-again-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+}
+
+.result-content.win .play-again-btn {
+    background: linear-gradient(135deg, #6aaa64 0%, #538d4e 100%);
+    box-shadow: 0 5px 20px rgba(106, 170, 100, 0.4);
+}
+
+.result-content.win .play-again-btn:hover {
+    box-shadow: 0 8px 30px rgba(106, 170, 100, 0.6);
+}
+
+/* Guessmate - Hockey Companion */
+.guessmate {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    transition: left 0.1s linear;
+}
+
+.guessmate.flip .guessmate-character {
+    transform: scaleX(-1);
+}
+
+/* Speech Bubble */
+.guessmate-speech {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    background: white;
+    border-radius: 16px;
+    padding: 10px 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 280px;
+    white-space: normal;
+    text-align: center;
+}
+
+.guessmate-speech::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid white;
+}
+
+.guessmate-speech.show {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+}
+
+.speech-text {
+    color: #1a1a2e;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* Guessmate Character */
+.guessmate-character {
+    width: 60px;
+    height: 80px;
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.guessmate-body {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Head */
+.guessmate-head {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 35px;
+    height: 35px;
+}
+
+.guessmate-helmet {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 70%;
+    background: linear-gradient(145deg, var(--guessmate-helmet), #1e3d6f);
+    border-radius: 50% 50% 40% 40%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.guessmate-helmet::before {
+    content: '';
+    position: absolute;
+    top: 40%;
+    left: 5%;
+    width: 90%;
+    height: 8px;
+    background: linear-gradient(to right, #87ceeb, #b0e0e6);
+    border-radius: 4px;
+}
+
+.guessmate-face {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 20px;
+    background: linear-gradient(145deg, #ffdbac, #f5c896);
+    border-radius: 0 0 12px 12px;
+}
+
+.guessmate-eye {
+    position: absolute;
+    top: 4px;
+    width: 5px;
+    height: 5px;
+    background: #333;
+    border-radius: 50%;
+}
+
+.guessmate-eye.left { left: 5px; }
+.guessmate-eye.right { right: 5px; }
+
+.guessmate-mouth {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 4px;
+    background: #d44;
+    border-radius: 0 0 5px 5px;
+}
+
+/* Torso */
+.guessmate-torso {
+    position: absolute;
+    top: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 25px;
+    background: linear-gradient(145deg, var(--guessmate-jersey), #1e3d6f);
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.guessmate-torso::before {
+    content: attr(data-number);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Legs */
+.guessmate-legs {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 26px;
+    height: 20px;
+}
+
+.guessmate-leg {
+    position: absolute;
+    bottom: 0;
+    width: 10px;
+    height: 18px;
+    background: linear-gradient(145deg, #333, #222);
+    border-radius: 3px 3px 5px 5px;
+}
+
+.guessmate-leg.left { left: 0; }
+.guessmate-leg.right { right: 0; }
+
+/* Walking Animation */
+.guessmate.walking .guessmate-leg.left {
+    animation: walkLeft 0.4s ease-in-out infinite;
+}
+
+.guessmate.walking .guessmate-leg.right {
+    animation: walkRight 0.4s ease-in-out infinite;
+}
+
+@keyframes walkLeft {
+    0%, 100% { transform: rotate(-15deg); }
+    50% { transform: rotate(15deg); }
+}
+
+@keyframes walkRight {
+    0%, 100% { transform: rotate(15deg); }
+    50% { transform: rotate(-15deg); }
+}
+
+/* Hockey Stick */
+.guessmate-stick {
+    position: absolute;
+    top: 35px;
+    right: -5px;
+    width: 5px;
+    height: 35px;
+    background: linear-gradient(to bottom, #8b4513, #654321);
+    border-radius: 2px;
+    transform: rotate(-30deg);
+    transform-origin: top center;
+}
+
+.guessmate-stick::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -8px;
+    width: 15px;
+    height: 6px;
+    background: #654321;
+    border-radius: 3px;
+}
+
+/* Mood Animations */
+.guessmate-character.mood-excited .guessmate-body {
+    animation: excited 0.5s ease infinite;
+}
+
+@keyframes excited {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-5px) rotate(2deg); }
+}
+
+.guessmate-character.mood-happy .guessmate-mouth {
+    width: 12px;
+    height: 6px;
+    border-radius: 0 0 8px 8px;
+}
+
+.guessmate-character.mood-thinking .guessmate-body {
+    animation: thinking 1s ease infinite;
+}
+
+.guessmate-character.mood-thinking .guessmate-eye {
+    height: 2px;
+    top: 5px;
+}
+
+@keyframes thinking {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+.guessmate-character.mood-worried .guessmate-eye {
+    transform: scaleY(1.3);
+}
+
+.guessmate-character.mood-worried .guessmate-mouth {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #333;
+    bottom: 3px;
+}
+
+.guessmate-character.mood-determined .guessmate-body {
+    animation: determined 0.3s ease infinite;
+}
+
+.guessmate-character.mood-determined .guessmate-eye::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -1px;
+    width: 7px;
+    height: 2px;
+    background: #333;
+    transform: rotate(-20deg);
+}
+
+.guessmate-character.mood-determined .guessmate-eye.right::after {
+    transform: rotate(20deg);
+}
+
+@keyframes determined {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.guessmate-character.mood-celebrating .guessmate-body {
+    animation: celebrate-body 0.4s ease infinite;
+}
+
+.guessmate-character.mood-celebrating .guessmate-stick {
+    animation: stick-wave 0.3s ease infinite;
+}
+
+@keyframes celebrate-body {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-8px) rotate(5deg); }
+}
+
+@keyframes stick-wave {
+    0%, 100% { transform: rotate(-30deg); }
+    50% { transform: rotate(-60deg); }
+}
+
+.guessmate-character.mood-sad .guessmate-body {
+    animation: sad 2s ease infinite;
+}
+
+.guessmate-character.mood-sad .guessmate-mouth {
+    width: 10px;
+    height: 4px;
+    background: transparent;
+    border: 2px solid #333;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    transform: translateX(-50%) rotate(180deg);
+    bottom: 6px;
+}
+
+@keyframes sad {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(2px); }
+}
+
+/* Settings Button */
+.settings-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: transform 0.3s ease;
+}
+
+.settings-btn:hover {
+    transform: rotate(45deg);
+}
+
+header {
+    position: relative;
+}
+
+/* Settings Panel */
+.settings-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 380px;
+    max-width: 90vw;
+    height: 100vh;
+    background: linear-gradient(145deg, #1e3a5f, #0d1f33);
+    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.settings-panel.show {
+    right: 0;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-header h3 {
+    color: #fff;
+    font-size: 1.3rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-close {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.settings-close:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+}
+
+.settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.settings-section {
+    margin-bottom: 25px;
+}
+
+.settings-section h4 {
+    color: #87ceeb;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(135, 206, 235, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.setting-row label {
+    color: #ddd;
+    font-size: 0.9rem;
+}
+
+.setting-row input[type="color"] {
+    width: 50px;
+    height: 35px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+}
+
+.setting-row input[type="number"] {
+    width: 70px;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.setting-row input[type="number"]:focus {
+    outline: none;
+    border-color: #87ceeb;
+}
+
+.setting-row select {
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.setting-row select:focus {
+    outline: none;
+    border-color: #87ceeb;
+}
+
+.setting-row select option {
+    background: #1e3a5f;
+    color: #fff;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 26px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 26px;
+    transition: 0.3s;
+}
+
+.toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: #6aaa64;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(24px);
+}
+
+/* Settings Footer */
+.settings-footer {
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reset-settings-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reset-settings-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+}
+
+.save-settings-btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    background: linear-gradient(135deg, #6aaa64 0%, #538d4e 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.save-settings-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(106, 170, 100, 0.4);
+}
+
+/* Settings Overlay */
+.settings-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.settings-overlay.show {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Responsive */

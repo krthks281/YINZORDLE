@@ -1,5 +1,5 @@
 // Ice Hockey themed 5-letter words
-const HOCKEY_WORDS = [
+let HOCKEY_WORDS = [
     // Equipment
     "PUCKS",
     "STICK",
@@ -123,12 +123,39 @@ const HOCKEY_WORDS = [
 ];
 
 // Filter to only 5-letter words and uppercase
-const VALID_WORDS = HOCKEY_WORDS
+let VALID_WORDS = HOCKEY_WORDS
     .map(word => word.toUpperCase().trim())
     .filter(word => word.length === 5);
 
 // Words that can be answers (subset of valid words)
-const ANSWER_WORDS = [...VALID_WORDS];
+let ANSWER_WORDS = [...VALID_WORDS];
+
+// Fetch additional hockey words from Datamuse API
+async function fetchHockeyWordsFromAPI() {
+    try {
+        const response = await fetch('https://api.datamuse.com/words?ml=hockey+ice+puck+rink&max=200');
+        const data = await response.json();
+
+        const newWords = data
+            .map(item => item.word.toUpperCase().trim())
+            .filter(word => word.length === 5 && /^[A-Z]+$/.test(word));
+
+        // Add new words that aren't already in our list
+        const uniqueNewWords = newWords.filter(word => !VALID_WORDS.includes(word));
+
+        if (uniqueNewWords.length > 0) {
+            HOCKEY_WORDS = [...HOCKEY_WORDS, ...uniqueNewWords];
+            VALID_WORDS = [...new Set([...VALID_WORDS, ...uniqueNewWords])];
+            ANSWER_WORDS = [...VALID_WORDS];
+            console.log(`Added ${uniqueNewWords.length} new words from API:`, uniqueNewWords);
+        }
+    } catch (error) {
+        console.log('Could not fetch additional words from API:', error.message);
+    }
+}
+
+// Fetch words on load
+fetchHockeyWordsFromAPI();
 
 // Additional common 5-letter words for valid guesses (players can type these)
 const COMMON_WORDS = [
