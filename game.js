@@ -1,5 +1,321 @@
 // Hockey Wordle Game Logic
 
+// Sport-specific coach character configurations
+const COACH_CHARACTERS = {
+    HOCKEY: {
+        name: 'Coach',
+        sport: 'hockey',
+        headgear: 'helmet',      // Hockey helmet with visor
+        accessory: 'stick',      // Hockey stick
+        outfit: 'jersey',        // Team jersey
+        colors: {
+            primary: '#2c5aa0',   // Team blue
+            secondary: '#1e3d6f', // Darker blue
+            accent: '#87ceeb'     // Ice blue visor
+        },
+        idleAnimation: 'stick-tap',
+        celebrateAnimation: 'stick-raise'
+    },
+    NFL: {
+        name: 'Coach',
+        sport: 'nfl',
+        headgear: 'headset',     // Coach headset with cap
+        accessory: 'clipboard',   // Play clipboard
+        outfit: 'polo',          // Team polo shirt
+        colors: {
+            primary: '#013369',   // NFL blue
+            secondary: '#D50A0A', // NFL red
+            accent: '#ffffff'     // White
+        },
+        idleAnimation: 'clipboard-check',
+        celebrateAnimation: 'fist-pump'
+    },
+    NBA: {
+        name: 'Coach',
+        sport: 'nba',
+        headgear: 'none',        // No headgear (bald/styled hair)
+        accessory: 'clipboard',   // Tactics clipboard
+        outfit: 'suit',          // Formal suit jacket
+        colors: {
+            primary: '#17408B',   // NBA blue
+            secondary: '#C9082A', // NBA red
+            accent: '#ffffff'     // White shirt
+        },
+        idleAnimation: 'thinking-pose',
+        celebrateAnimation: 'arms-up'
+    },
+    FA: {
+        name: 'Manager',
+        sport: 'football',
+        headgear: 'none',        // No headgear
+        accessory: 'tactics-board', // Small tactics board
+        outfit: 'tracksuit',     // Manager tracksuit
+        colors: {
+            primary: '#37003c',   // Premier League purple
+            secondary: '#00ff85', // Premier League green
+            accent: '#ffffff'     // White
+        },
+        idleAnimation: 'arms-crossed',
+        celebrateAnimation: 'fist-pump'
+    }
+};
+
+// Sport-specific messages for Guessmate
+const SPORT_MESSAGES = {
+    HOCKEY: {
+        icon: '🏒',
+        greetings: [
+            "Hey teammate! Let's find that word! 🏒",
+            "Ready to score some letters? Let's go!",
+            "Time to hit the ice! Good luck! ⭐",
+            "I believe in you, champ! 💪"
+        ],
+        invalidWord: [
+            "Hmm, that's not in my playbook! 📖",
+            "Try another word, teammate!",
+            "That word's offside! Try again!",
+            "Not a valid play! Think again!"
+        ],
+        goodProgress: [
+            "Good progress! Keep going! 👍",
+            "You're onto something!",
+            "Nice! Use those clues!",
+            "Getting warmer! 🌡️"
+        ],
+        closeToWin: [
+            "So close! 🔥",
+            "You're heating up! 🏒",
+            "Almost there, keep pushing!",
+            "Hat trick of greens! One more push!"
+        ],
+        yellowHints: [
+            "Yellow means it's there somewhere!",
+            "Right letters, wrong spots!",
+            "Shuffle those letters around!",
+            "Close! Rearrange them!"
+        ],
+        noMatch: [
+            "Tough one! Don't give up!",
+            "Fresh start! Try new letters!",
+            "That's hockey - shake it off!",
+            "No worries, next attempt! 💪"
+        ],
+        lateGame: [
+            "Focus! We got this!",
+            "Crunch time! Concentrate!",
+            "Final minutes! Give it all!"
+        ],
+        win: {
+            1: "INCREDIBLE! First try?! You're a legend! 🏆",
+            2: "AMAZING! Two tries! Pro player! 🥇",
+            3: "FANTASTIC! Great skills! 🌟",
+            4: "NICE ONE! Solid performance! 🏒",
+            5: "GOOD JOB! You figured it out! 👏",
+            6: "PHEW! Clutch play! Never gave up! 💪"
+        },
+        lose: [
+            "We'll get 'em next time!",
+            "Tough one. You'll nail it next round!",
+            "Hockey's about bouncing back!"
+        ],
+        newGame: [
+            "Fresh ice! Let's do this! 🏒",
+            "New game, new chances!",
+            "Back on the ice! Ready!",
+            "Let's go, teammate! ⭐"
+        ]
+    },
+    NFL: {
+        icon: '🏈',
+        greetings: [
+            "Huddle up! Let's find that word! 🏈",
+            "Ready for the snap? Let's go!",
+            "Game time! Good luck, QB! ⭐",
+            "Let's drive down the field! 💪"
+        ],
+        invalidWord: [
+            "That's an incomplete pass! 📖",
+            "Try another play, coach!",
+            "Flag on the play! Try again!",
+            "Not in the playbook! Think again!"
+        ],
+        goodProgress: [
+            "First down! Keep moving! 👍",
+            "You're gaining yards!",
+            "Nice audible! Use those clues!",
+            "In the red zone! 🌡️"
+        ],
+        closeToWin: [
+            "Goal line stand! 🔥",
+            "You're in the end zone! 🏈",
+            "Almost a touchdown!",
+            "One more play to score!"
+        ],
+        yellowHints: [
+            "Right players, wrong formation!",
+            "Correct letters, wrong positions!",
+            "Time to call an audible!",
+            "Rearrange the lineup!"
+        ],
+        noMatch: [
+            "Incomplete! Try again!",
+            "New drive! Fresh letters!",
+            "Shake off that sack!",
+            "Reset and try again! 💪"
+        ],
+        lateGame: [
+            "Two-minute drill!",
+            "Fourth quarter focus!",
+            "No timeouts left! Go!"
+        ],
+        win: {
+            1: "HAIL MARY MIRACLE! First try! 🏆",
+            2: "AMAZING! Two-play TD! 🥇",
+            3: "FANTASTIC! Great drive! 🌟",
+            4: "TOUCHDOWN! Solid game! 🏈",
+            5: "FIELD GOAL! You scored! 👏",
+            6: "PHEW! Overtime victory! 💪"
+        },
+        lose: [
+            "We'll get 'em next game!",
+            "Tough loss. Next drive!",
+            "Champions bounce back!"
+        ],
+        newGame: [
+            "New game! Kickoff time! 🏈",
+            "Fresh quarter, new chances!",
+            "Back in the huddle! Ready!",
+            "Let's move the chains! ⭐"
+        ]
+    },
+    NBA: {
+        icon: '🏀',
+        greetings: [
+            "Let's ball! Find that word! 🏀",
+            "Ready to shoot some letters? Let's go!",
+            "Tip-off! Good luck! ⭐",
+            "Time to get buckets! 💪"
+        ],
+        invalidWord: [
+            "That's a travel! Try again! 📖",
+            "Air ball! Try another word!",
+            "Shot clock violation! Try again!",
+            "Out of bounds! Think again!"
+        ],
+        goodProgress: [
+            "Nice dribble! Keep going! 👍",
+            "You're in rhythm!",
+            "Great pass! Use those clues!",
+            "Heating up! 🌡️"
+        ],
+        closeToWin: [
+            "Buzzer beater time! 🔥",
+            "You're on fire! 🏀",
+            "Almost a triple-double!",
+            "One more shot to win!"
+        ],
+        yellowHints: [
+            "Right players, wrong positions!",
+            "Good picks, wrong spots!",
+            "Run a different play!",
+            "Switch up the rotation!"
+        ],
+        noMatch: [
+            "Blocked! Try again!",
+            "New possession! Fresh letters!",
+            "Shake off that miss!",
+            "Reset the offense! 💪"
+        ],
+        lateGame: [
+            "Clutch time!",
+            "Fourth quarter mode!",
+            "Final minutes! Go hard!"
+        ],
+        win: {
+            1: "SLAM DUNK! First try! 🏆",
+            2: "AMAZING! And-one baby! 🥇",
+            3: "FANTASTIC! Three-pointer! 🌟",
+            4: "SWISH! Nice shot! 🏀",
+            5: "BUCKET! You scored! 👏",
+            6: "PHEW! Buzzer beater win! 💪"
+        },
+        lose: [
+            "We'll get 'em next game!",
+            "Tough loss. Next quarter!",
+            "Champions come back stronger!"
+        ],
+        newGame: [
+            "New game! Jump ball! 🏀",
+            "Fresh quarter, new chances!",
+            "Back on the court! Ready!",
+            "Let's run it back! ⭐"
+        ]
+    },
+    FA: {
+        icon: '⚽',
+        greetings: [
+            "Let's go! Find that word! ⚽",
+            "Ready to score? Let's go!",
+            "Kickoff! Good luck! ⭐",
+            "Time to find the net! 💪"
+        ],
+        invalidWord: [
+            "That's offside! Try again! 📖",
+            "No goal! Try another word!",
+            "Yellow card! Try again!",
+            "Out of play! Think again!"
+        ],
+        goodProgress: [
+            "Great pass! Keep going! 👍",
+            "You're through on goal!",
+            "Nice dribble! Use those clues!",
+            "In the box! 🌡️"
+        ],
+        closeToWin: [
+            "Penalty kick time! 🔥",
+            "You're on fire! ⚽",
+            "Almost a hat trick!",
+            "One more strike to win!"
+        ],
+        yellowHints: [
+            "Right players, wrong positions!",
+            "Good formation, wrong spots!",
+            "Change the tactics!",
+            "Switch up the lineup!"
+        ],
+        noMatch: [
+            "Saved! Try again!",
+            "New attack! Fresh letters!",
+            "Shake off that miss!",
+            "Reset the formation! 💪"
+        ],
+        lateGame: [
+            "Injury time!",
+            "Extra time mode!",
+            "Final whistle coming! Go!"
+        ],
+        win: {
+            1: "GOLAZO! First try! 🏆",
+            2: "AMAZING! Brace! 🥇",
+            3: "FANTASTIC! Hat trick! 🌟",
+            4: "GOAL! Nice finish! ⚽",
+            5: "SCORED! You did it! 👏",
+            6: "PHEW! Last minute winner! 💪"
+        },
+        lose: [
+            "We'll get 'em next match!",
+            "Tough loss. Next half!",
+            "Champions bounce back!"
+        ],
+        newGame: [
+            "New match! Kickoff! ⚽",
+            "Fresh half, new chances!",
+            "Back on the pitch! Ready!",
+            "Let's go again! ⭐"
+        ]
+    }
+};
+
 // Settings Manager - Customization options
 class SettingsManager {
     constructor() {
@@ -23,11 +339,6 @@ class SettingsManager {
                 family: 'Segoe UI',
                 titleSize: '2rem',
                 tileSize: '1.8rem'
-            },
-            // Theme
-            theme: {
-                primaryColor: '#667eea',
-                backgroundColor: '#1a1a2e'
             }
         };
 
@@ -63,10 +374,6 @@ class SettingsManager {
         root.style.setProperty('--font-family', this.settings.font.family);
         root.style.setProperty('--title-size', this.settings.font.titleSize);
         root.style.setProperty('--tile-font-size', this.settings.font.tileSize);
-
-        // Apply theme
-        root.style.setProperty('--primary-color', this.settings.theme.primaryColor);
-        root.style.setProperty('--bg-color', this.settings.theme.backgroundColor);
 
         // Update Guessmate jersey number and color if it exists
         const torso = document.querySelector('.guessmate-torso');
@@ -196,12 +503,11 @@ class SettingsManager {
                 <div class="settings-section">
                     <h4>🎨 Theme</h4>
                     <div class="setting-row">
-                        <label>Primary Color</label>
-                        <input type="color" id="setting-primary-color" value="${this.settings.theme.primaryColor}">
-                    </div>
-                    <div class="setting-row">
-                        <label>Background</label>
-                        <input type="color" id="setting-bg-color" value="${this.settings.theme.backgroundColor}">
+                        <label>Dark Mode</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-dark-mode" ${document.documentElement.getAttribute('data-theme') === 'dark' ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -223,6 +529,17 @@ class SettingsManager {
         this.panel.querySelectorAll('input, select').forEach(input => {
             input.addEventListener('change', () => this.previewChanges());
         });
+
+        // Dark mode toggle - handled separately since it uses ThemeController
+        const darkModeToggle = this.panel.querySelector('#setting-dark-mode');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('change', (e) => {
+                const theme = e.target.checked ? 'dark' : 'light';
+                if (window.themeController) {
+                    window.themeController.setTheme(theme, true);
+                }
+            });
+        }
 
         // Animate in
         setTimeout(() => this.panel.classList.add('show'), 10);
@@ -259,9 +576,6 @@ class SettingsManager {
         this.settings.font.family = this.panel.querySelector('#setting-font-family').value;
         this.settings.font.titleSize = this.panel.querySelector('#setting-title-size').value;
         this.settings.font.tileSize = this.panel.querySelector('#setting-tile-size').value;
-
-        this.settings.theme.primaryColor = this.panel.querySelector('#setting-primary-color').value;
-        this.settings.theme.backgroundColor = this.panel.querySelector('#setting-bg-color').value;
     }
 
     saveFromPanel() {
@@ -281,7 +595,337 @@ class SettingsManager {
 // Global settings instance
 const settingsManager = new SettingsManager();
 
-// Guessmate - Your friendly hockey companion
+// GuessmatAnimator - Anime.js powered 3D animations
+class GuessmatAnimator {
+    constructor(guessmate) {
+        this.guessmate = guessmate;
+        this.currentAnimation = null;
+        this.floatAnimation = null;
+    }
+
+    // 3D Speech bubble pop animation
+    showSpeechBubble(speechBubble) {
+        // Kill any existing animations
+        if (this.currentAnimation) {
+            this.currentAnimation.pause();
+        }
+
+        const cloudShape = speechBubble.querySelector('.cloud-shape');
+        const bubbles = speechBubble.querySelectorAll('.bubble');
+        const textContainer = speechBubble.querySelector('.speech-text-container');
+
+        // Reset initial state
+        anime.set(speechBubble, { opacity: 0 });
+        anime.set(cloudShape, {
+            scale: 0,
+            rotateX: 45,
+            translateZ: -30
+        });
+        anime.set(bubbles, { scale: 0, opacity: 0 });
+        anime.set(textContainer, { opacity: 0, translateY: 10 });
+
+        // Show the bubble
+        speechBubble.classList.add('show');
+
+        // Create timeline
+        this.currentAnimation = anime.timeline({
+            easing: 'easeOutElastic(1, 0.6)'
+        })
+        .add({
+            targets: speechBubble,
+            opacity: 1,
+            duration: 100,
+            easing: 'linear'
+        })
+        .add({
+            targets: cloudShape,
+            scale: [0, 1.15, 1],
+            rotateX: [45, -5, 0],
+            translateZ: [-30, 10, 0],
+            duration: 600,
+            easing: 'spring(1, 80, 10, 0)'
+        }, '-=50')
+        .add({
+            targets: bubbles,
+            scale: [0, 1.3, 1],
+            opacity: [0, 1],
+            delay: anime.stagger(80, { start: 0 }),
+            duration: 400,
+            easing: 'spring(1, 90, 12, 0)'
+        }, '-=400')
+        .add({
+            targets: textContainer,
+            opacity: [0, 1],
+            translateY: [10, 0],
+            duration: 300,
+            easing: 'easeOutCubic'
+        }, '-=300');
+
+        // Start floating animation after pop
+        this.currentAnimation.finished.then(() => {
+            this.startFloating(cloudShape);
+        });
+
+        return this.currentAnimation;
+    }
+
+    // Hide speech bubble with 3D animation
+    hideSpeechBubble(speechBubble) {
+        if (this.floatAnimation) {
+            this.floatAnimation.pause();
+        }
+
+        const cloudShape = speechBubble.querySelector('.cloud-shape');
+        const bubbles = speechBubble.querySelectorAll('.bubble');
+
+        return anime.timeline({
+            easing: 'easeInCubic'
+        })
+        .add({
+            targets: [...bubbles].reverse(),
+            scale: 0,
+            opacity: 0,
+            delay: anime.stagger(50),
+            duration: 150
+        })
+        .add({
+            targets: cloudShape,
+            scale: [1, 1.05, 0],
+            rotateX: [0, -15],
+            translateZ: [0, -20],
+            duration: 300
+        }, '-=100')
+        .add({
+            targets: speechBubble,
+            opacity: 0,
+            duration: 100,
+            complete: () => {
+                speechBubble.classList.remove('show');
+            }
+        }, '-=150');
+    }
+
+    // Gentle floating animation for the cloud
+    startFloating(cloudShape) {
+        this.floatAnimation = anime({
+            targets: cloudShape,
+            translateY: [-2, 2],
+            rotateZ: [-0.5, 0.5],
+            duration: 2000,
+            direction: 'alternate',
+            loop: true,
+            easing: 'easeInOutSine'
+        });
+    }
+
+    // Character mood animations
+    animateMood(character, mood) {
+        // Remove any existing mood animations
+        anime.remove(character);
+        anime.remove(character.querySelector('.guessmate-body'));
+        anime.remove(character.querySelector('.guessmate-head'));
+
+        const body = character.querySelector('.guessmate-body');
+        const head = character.querySelector('.guessmate-head');
+
+        switch (mood) {
+            case 'excited':
+                this.animateExcited(body, head);
+                break;
+            case 'celebrating':
+                this.animateCelebrating(body, head);
+                break;
+            case 'thinking':
+                this.animateThinking(body, head);
+                break;
+            case 'worried':
+                this.animateWorried(body, head);
+                break;
+            case 'sad':
+                this.animateSad(body, head);
+                break;
+            case 'happy':
+                this.animateHappy(body, head);
+                break;
+            case 'determined':
+                this.animateDetermined(body, head);
+                break;
+            default:
+                this.animateIdle(body, head);
+        }
+    }
+
+    animateExcited(body, head) {
+        anime({
+            targets: body,
+            translateY: [-3, 0],
+            duration: 300,
+            direction: 'alternate',
+            loop: 3,
+            easing: 'easeOutQuad'
+        });
+        anime({
+            targets: head,
+            rotateZ: [-5, 5],
+            duration: 200,
+            direction: 'alternate',
+            loop: 4,
+            easing: 'easeInOutSine'
+        });
+    }
+
+    animateCelebrating(body, head) {
+        // Jump animation
+        anime({
+            targets: body,
+            translateY: [-15, 0],
+            scaleY: [0.9, 1.1, 1],
+            duration: 500,
+            direction: 'alternate',
+            loop: true,
+            easing: 'easeOutBounce'
+        });
+        // Head wobble
+        anime({
+            targets: head,
+            rotateZ: [-10, 10],
+            duration: 300,
+            direction: 'alternate',
+            loop: true,
+            easing: 'easeInOutSine'
+        });
+    }
+
+    animateThinking(body, head) {
+        anime({
+            targets: head,
+            rotateZ: [0, 8],
+            translateX: [0, 2],
+            duration: 1500,
+            direction: 'alternate',
+            loop: true,
+            easing: 'easeInOutQuad'
+        });
+        anime({
+            targets: body,
+            rotateZ: [0, 2],
+            duration: 2000,
+            direction: 'alternate',
+            loop: true,
+            easing: 'easeInOutSine'
+        });
+    }
+
+    animateWorried(body, head) {
+        // Shake animation
+        anime({
+            targets: body,
+            translateX: [-2, 2],
+            duration: 100,
+            direction: 'alternate',
+            loop: 5,
+            easing: 'linear'
+        });
+        anime({
+            targets: head,
+            rotateZ: [-3, 3],
+            duration: 150,
+            direction: 'alternate',
+            loop: 4,
+            easing: 'linear'
+        });
+    }
+
+    animateSad(body, head) {
+        anime({
+            targets: body,
+            translateY: [0, 3],
+            scaleY: [1, 0.95],
+            duration: 1000,
+            easing: 'easeOutQuad'
+        });
+        anime({
+            targets: head,
+            rotateZ: [0, -5],
+            translateY: [0, 3],
+            duration: 1000,
+            easing: 'easeOutQuad'
+        });
+    }
+
+    animateHappy(body, head) {
+        anime({
+            targets: body,
+            translateY: [-2, 0],
+            duration: 400,
+            direction: 'alternate',
+            loop: 2,
+            easing: 'easeOutQuad'
+        });
+        anime({
+            targets: head,
+            rotateZ: [-3, 3],
+            duration: 300,
+            direction: 'alternate',
+            loop: 3,
+            easing: 'easeInOutSine'
+        });
+    }
+
+    animateDetermined(body, head) {
+        // Lean forward
+        anime({
+            targets: body,
+            rotateZ: [0, -3],
+            translateY: [0, -2],
+            duration: 500,
+            easing: 'easeOutQuad'
+        });
+        anime({
+            targets: head,
+            rotateZ: [0, 5],
+            duration: 500,
+            easing: 'easeOutQuad'
+        });
+    }
+
+    animateIdle(body) {
+        anime({
+            targets: body,
+            translateY: [-1, 1],
+            duration: 2000,
+            direction: 'alternate',
+            loop: true,
+            easing: 'easeInOutSine'
+        });
+    }
+
+    // Walking bounce animation
+    animateWalking(element) {
+        return anime({
+            targets: element.querySelector('.guessmate-body'),
+            translateY: [-2, 0],
+            duration: 200,
+            direction: 'alternate',
+            loop: true,
+            easing: 'easeInOutQuad'
+        });
+    }
+
+    // Reaction burst - quick attention getter
+    reactionBurst(character) {
+        const body = character.querySelector('.guessmate-body');
+
+        return anime({
+            targets: body,
+            scale: [1, 1.1, 1],
+            duration: 300,
+            easing: 'easeOutElastic(1, 0.5)'
+        });
+    }
+}
+
+// Guessmate - Your friendly sports companion
 class Guessmate {
     constructor() {
         this.element = null;
@@ -291,8 +935,144 @@ class Guessmate {
         this.direction = 1;
         this.walkInterval = null;
         this.isWalking = false;
+        this.animator = null;
+        this.currentSport = typeof currentSport !== 'undefined' ? currentSport : 'HOCKEY';
         this.create();
+        // Initialize animator after elements are created
+        this.animator = new GuessmatAnimator(this);
         this.startIdleWalk();
+    }
+
+    // Get current sport config
+    getCoachConfig() {
+        return COACH_CHARACTERS[this.currentSport] || COACH_CHARACTERS.HOCKEY;
+    }
+
+    // Get messages for the current sport
+    getMessages() {
+        const sport = typeof currentSport !== 'undefined' ? currentSport : 'HOCKEY';
+        return SPORT_MESSAGES[sport] || SPORT_MESSAGES.HOCKEY;
+    }
+
+    // Helper to pick a random message from an array
+    randomMessage(messages) {
+        return messages[Math.floor(Math.random() * messages.length)];
+    }
+
+    // Generate character HTML based on sport
+    generateCharacterHTML(config) {
+        const { sport, headgear, accessory, outfit, colors } = config;
+
+        // Build headgear HTML
+        let headgearHTML = '';
+        switch (headgear) {
+            case 'helmet':
+                headgearHTML = `<div class="guessmate-helmet coach-helmet-hockey"></div>`;
+                break;
+            case 'headset':
+                headgearHTML = `
+                    <div class="guessmate-cap"></div>
+                    <div class="guessmate-headset">
+                        <div class="headset-band"></div>
+                        <div class="headset-mic"></div>
+                    </div>`;
+                break;
+            case 'none':
+            default:
+                headgearHTML = `<div class="guessmate-hair coach-hair-${sport}"></div>`;
+                break;
+        }
+
+        // Build accessory HTML
+        let accessoryHTML = '';
+        switch (accessory) {
+            case 'stick':
+                accessoryHTML = `<div class="guessmate-stick coach-stick-hockey"></div>`;
+                break;
+            case 'clipboard':
+                accessoryHTML = `<div class="guessmate-clipboard coach-clipboard-${sport}"></div>`;
+                break;
+            case 'tactics-board':
+                accessoryHTML = `<div class="guessmate-tactics-board"></div>`;
+                break;
+        }
+
+        // Build outfit class
+        const outfitClass = `coach-outfit-${outfit}`;
+
+        return `
+            <div class="guessmate-body coach-${sport}">
+                <div class="guessmate-head">
+                    ${headgearHTML}
+                    <div class="guessmate-face">
+                        <div class="guessmate-eye left"></div>
+                        <div class="guessmate-eye right"></div>
+                        <div class="guessmate-mouth"></div>
+                    </div>
+                </div>
+                <div class="guessmate-torso ${outfitClass}" data-number="${settingsManager.settings.guessmate.jerseyNumber}"></div>
+                <div class="guessmate-arms">
+                    <div class="guessmate-arm left"></div>
+                    <div class="guessmate-arm right"></div>
+                </div>
+                <div class="guessmate-legs">
+                    <div class="guessmate-leg left"></div>
+                    <div class="guessmate-leg right"></div>
+                </div>
+                ${accessoryHTML}
+            </div>
+        `;
+    }
+
+    // Switch character when sport changes
+    switchCharacter(newSport) {
+        this.currentSport = newSport;
+        const config = this.getCoachConfig();
+
+        // Update character HTML with animation
+        if (this.character) {
+            // Add switching animation class
+            this.character.classList.add('switching');
+
+            // Wait for half animation then swap content
+            setTimeout(() => {
+                this.character.innerHTML = this.generateCharacterHTML(config);
+
+                // Update character class for sport-specific styling
+                this.character.className = 'guessmate-character switching';
+                this.character.classList.add(`sport-${config.sport}`);
+
+                // Apply CSS variables for colors
+                this.applyCoachColors(config.colors);
+
+                // Remove switching class after animation completes
+                setTimeout(() => {
+                    this.character.classList.remove('switching');
+                }, 200);
+            }, 200);
+        }
+
+        // Re-initialize animator with new character elements after switch
+        setTimeout(() => {
+            if (this.animator) {
+                this.animator = new GuessmatAnimator(this);
+            }
+        }, 400);
+
+        // Say a greeting in the new sport's style
+        const messages = this.getMessages();
+        setTimeout(() => {
+            this.say(this.randomMessage(messages.newGame));
+        }, 500);
+    }
+
+    // Apply coach colors via CSS variables
+    applyCoachColors(colors) {
+        if (this.element) {
+            this.element.style.setProperty('--coach-primary', colors.primary);
+            this.element.style.setProperty('--coach-secondary', colors.secondary);
+            this.element.style.setProperty('--coach-accent', colors.accent);
+        }
     }
 
     create() {
@@ -301,28 +1081,30 @@ class Guessmate {
         container.id = 'guessmate';
         container.className = 'guessmate';
 
-        // Create the character
+        // Get coach config for current sport
+        const config = this.getCoachConfig();
+        const messages = this.getMessages();
+        const initialMessage = `Let's play! ${messages.icon}`;
+
         container.innerHTML = `
             <div class="guessmate-speech" id="guessmate-speech">
-                <span class="speech-text">Let's play hockey words! 🏒</span>
-            </div>
-            <div class="guessmate-character" id="guessmate-char">
-                <div class="guessmate-body">
-                    <div class="guessmate-head">
-                        <div class="guessmate-helmet"></div>
-                        <div class="guessmate-face">
-                            <div class="guessmate-eye left"></div>
-                            <div class="guessmate-eye right"></div>
-                            <div class="guessmate-mouth"></div>
-                        </div>
+                <div class="cloud-shape">
+                    <div class="cloud-bump-1"></div>
+                    <div class="cloud-bump-2"></div>
+                    <div class="cloud-bump-3"></div>
+                    <div class="cloud-bump-4"></div>
+                    <div class="speech-text-container">
+                        <span class="speech-text">${initialMessage}</span>
                     </div>
-                    <div class="guessmate-torso" data-number="${settingsManager.settings.guessmate.jerseyNumber}"></div>
-                    <div class="guessmate-legs">
-                        <div class="guessmate-leg left"></div>
-                        <div class="guessmate-leg right"></div>
-                    </div>
-                    <div class="guessmate-stick"></div>
                 </div>
+                <div class="cloud-bubble-tail">
+                    <div class="bubble bubble-1"></div>
+                    <div class="bubble bubble-2"></div>
+                    <div class="bubble bubble-3"></div>
+                </div>
+            </div>
+            <div class="guessmate-character sport-${config.sport}" id="guessmate-char">
+                ${this.generateCharacterHTML(config)}
             </div>
         `;
 
@@ -330,16 +1112,44 @@ class Guessmate {
         this.element = container;
         this.speechBubble = document.getElementById('guessmate-speech');
         this.character = document.getElementById('guessmate-char');
+
+        // Apply initial coach colors
+        this.applyCoachColors(config.colors);
     }
 
     say(message, duration = 3000) {
         const speechText = this.speechBubble.querySelector('.speech-text');
         speechText.textContent = message;
-        this.speechBubble.classList.add('show');
 
-        setTimeout(() => {
-            this.speechBubble.classList.remove('show');
-        }, duration);
+        // Clear any existing timeout
+        if (this.speechTimeout) {
+            clearTimeout(this.speechTimeout);
+        }
+
+        // Use Anime.js for 3D speech bubble animation
+        if (this.animator && typeof anime !== 'undefined') {
+            // Hide first if already showing
+            if (this.speechBubble.classList.contains('show')) {
+                this.speechBubble.classList.remove('show');
+            }
+
+            // Show with 3D animation
+            this.animator.showSpeechBubble(this.speechBubble);
+
+            // Hide after duration
+            this.speechTimeout = setTimeout(() => {
+                this.animator.hideSpeechBubble(this.speechBubble);
+            }, duration);
+        } else {
+            // Fallback to CSS animation
+            this.speechBubble.classList.remove('show', 'css-animate');
+            void this.speechBubble.offsetWidth;
+            this.speechBubble.classList.add('show', 'css-animate');
+
+            this.speechTimeout = setTimeout(() => {
+                this.speechBubble.classList.remove('show', 'css-animate');
+            }, duration);
+        }
     }
 
     setMood(mood) {
@@ -347,6 +1157,11 @@ class Guessmate {
         const character = this.character;
         character.className = 'guessmate-character';
         character.classList.add(`mood-${mood}`);
+
+        // Use Anime.js for mood animations
+        if (this.animator && typeof anime !== 'undefined') {
+            this.animator.animateMood(character, mood);
+        }
     }
 
     startIdleWalk() {
@@ -382,16 +1197,12 @@ class Guessmate {
     // Reactions for different game events
     onGameStart() {
         this.setMood('excited');
-        const greetings = [
-            "Hey teammate! Let's find that word! 🏒",
-            "Ready to score some letters? Let's go!",
-            "Time to hit the ice! Good luck! ⭐",
-            "I believe in you, champ! 💪"
-        ];
-        this.say(greetings[Math.floor(Math.random() * greetings.length)]);
+        const messages = this.getMessages();
+        this.say(this.randomMessage(messages.greetings));
     }
 
     onLetterTyped(letter, position) {
+        const messages = this.getMessages();
         if (position === 0) {
             this.setMood('thinking');
             const reactions = [
@@ -399,10 +1210,10 @@ class Guessmate {
                 `Ooh, starting with ${letter}!`,
                 `${letter}, nice choice!`
             ];
-            this.say(reactions[Math.floor(Math.random() * reactions.length)], 1500);
+            this.say(this.randomMessage(reactions), 1500);
         } else if (position === 4) {
             this.setMood('excited');
-            this.say("Full word! Hit Enter! 🎯", 2000);
+            this.say(`Full word! Hit Enter! ${messages.icon}`, 2000);
         }
     }
 
@@ -419,13 +1230,8 @@ class Guessmate {
 
     onInvalidWord() {
         this.setMood('worried');
-        const reactions = [
-            "Hmm, that's not in my playbook! 📖",
-            "Try another word, teammate!",
-            "That word's offside! Try again!",
-            "Not a valid play! Think again!"
-        ];
-        this.say(reactions[Math.floor(Math.random() * reactions.length)]);
+        const messages = this.getMessages();
+        this.say(this.randomMessage(messages.invalidWord));
     }
 
     onNotEnoughLetters() {
@@ -444,54 +1250,28 @@ class Guessmate {
             return;
         }
 
+        const messages = this.getMessages();
+
         if (correctCount >= 3) {
             this.setMood('excited');
-            const reactions = [
-                `${correctCount} green! So close! 🔥`,
-                "You're heating up! 🏒",
-                "Almost there, keep pushing!",
-                "Hat trick of greens! One more push!"
-            ];
-            this.say(reactions[Math.floor(Math.random() * reactions.length)]);
+            const closeMessages = [`${correctCount} green! ${this.randomMessage(messages.closeToWin)}`];
+            this.say(this.randomMessage(closeMessages.concat(messages.closeToWin)));
         } else if (correctCount >= 1 || presentCount >= 2) {
             this.setMood('happy');
-            const reactions = [
-                "Good progress! Keep going! 👍",
-                "You're onto something!",
-                "Nice! Use those clues!",
-                "Getting warmer! 🌡️"
-            ];
-            this.say(reactions[Math.floor(Math.random() * reactions.length)]);
+            this.say(this.randomMessage(messages.goodProgress));
         } else if (presentCount >= 1) {
             this.setMood('thinking');
-            const reactions = [
-                "Yellow means it's there somewhere!",
-                "Right letters, wrong spots!",
-                "Shuffle those letters around!",
-                "Close! Rearrange them!"
-            ];
-            this.say(reactions[Math.floor(Math.random() * reactions.length)]);
+            this.say(this.randomMessage(messages.yellowHints));
         } else {
             this.setMood('worried');
-            const reactions = [
-                "Tough one! Don't give up!",
-                "Fresh start! Try new letters!",
-                "That's hockey - shake it off!",
-                "No worries, next attempt! 💪"
-            ];
-            this.say(reactions[Math.floor(Math.random() * reactions.length)]);
+            this.say(this.randomMessage(messages.noMatch));
         }
 
         // Extra encouragement on later attempts
         if (attempt >= 4 && correctCount < 3) {
             setTimeout(() => {
                 this.setMood('determined');
-                const lateReactions = [
-                    "Focus! We got this!",
-                    "Crunch time! Concentrate!",
-                    "Final minutes! Give it all!"
-                ];
-                this.say(lateReactions[Math.floor(Math.random() * lateReactions.length)]);
+                this.say(this.randomMessage(messages.lateGame));
             }, 3500);
         }
     }
@@ -499,38 +1279,24 @@ class Guessmate {
     onWin(attempts) {
         this.stopWalking();
         this.setMood('celebrating');
-        const reactions = {
-            1: "INCREDIBLE! First try?! You're a legend! 🏆",
-            2: "AMAZING! Two tries! Pro player! 🥇",
-            3: "FANTASTIC! Great skills! 🌟",
-            4: "NICE ONE! Solid performance! 🏒",
-            5: "GOOD JOB! You figured it out! 👏",
-            6: "PHEW! Clutch play! Never gave up! 💪"
-        };
-        this.say(reactions[attempts] || "YOU WON! 🎉", 5000);
+        const messages = this.getMessages();
+        const winMessage = messages.win[attempts] || `YOU WON! ${messages.icon}`;
+        this.say(winMessage, 5000);
     }
 
     onLose(word) {
         this.stopWalking();
         this.setMood('sad');
-        const reactions = [
-            `The word was ${word}. We'll get 'em next time!`,
-            `${word}! Tough one. You'll nail it next round!`,
-            `Ah, ${word}! Hockey's about bouncing back!`
-        ];
-        this.say(reactions[Math.floor(Math.random() * reactions.length)], 5000);
+        const messages = this.getMessages();
+        const loseMessage = `The word was ${word}. ${this.randomMessage(messages.lose)}`;
+        this.say(loseMessage, 5000);
     }
 
     onNewGame() {
         this.setMood('excited');
         this.startIdleWalk();
-        const reactions = [
-            "Fresh ice! Let's do this! 🏒",
-            "New game, new chances!",
-            "Back on the ice! Ready!",
-            "Let's go, teammate! ⭐"
-        ];
-        this.say(reactions[Math.floor(Math.random() * reactions.length)]);
+        const messages = this.getMessages();
+        this.say(this.randomMessage(messages.newGame));
     }
 
     reset() {
@@ -550,20 +1316,177 @@ class HockeyWordle {
         this.gameOver = false;
         this.guesses = [];
         this.guessmate = null;
+        this.isMobile = false;
+        this.mobileInput = null;
 
         this.init();
     }
 
     init() {
+        this.checkMobile();
         this.createBoard();
         this.createKeyboard();
         this.selectNewWord();
         this.bindEvents();
+        this.bindSportSelector();
         this.guessmate = new Guessmate();
         setTimeout(() => this.guessmate.onGameStart(), 500);
 
         // Apply saved settings
         settingsManager.apply();
+
+        // Initialize sport selector from saved preference
+        this.initSportSelector();
+
+        // Setup mobile if needed
+        if (this.isMobile) {
+            this.setupMobile();
+        }
+
+        // Listen for resize
+        window.addEventListener('resize', () => {
+            const wasMobile = this.isMobile;
+            this.checkMobile();
+            if (this.isMobile !== wasMobile) {
+                if (this.isMobile) {
+                    this.setupMobile();
+                } else {
+                    this.cleanupMobile();
+                }
+            }
+        });
+    }
+
+    checkMobile() {
+        this.isMobile = window.innerWidth <= 500;
+    }
+
+    setupMobile() {
+        this.mobileInput = document.getElementById('mobile-input');
+
+        // Make current row tiles tappable
+        this.updateTappableTiles();
+
+        // Bind mobile input events
+        if (this.mobileInput) {
+            this.mobileInput.addEventListener('input', (e) => this.handleMobileInput(e));
+            this.mobileInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace') {
+                    e.preventDefault();
+                    this.handleKeyPress('⌫');
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.handleKeyPress('ENTER');
+                }
+            });
+        }
+
+        // Bind mobile control buttons
+        const undoBtn = document.getElementById('mobile-undo');
+        const submitBtn = document.getElementById('mobile-submit');
+
+        if (undoBtn) {
+            undoBtn.addEventListener('click', () => {
+                this.handleKeyPress('⌫');
+            });
+        }
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', () => {
+                this.handleKeyPress('ENTER');
+            });
+        }
+    }
+
+    cleanupMobile() {
+        // Remove tappable classes from tiles
+        document.querySelectorAll('.tile').forEach(tile => {
+            tile.classList.remove('tappable', 'active-cell');
+        });
+    }
+
+    updateTappableTiles() {
+        if (!this.isMobile) return;
+
+        // Remove all tappable/active classes first
+        document.querySelectorAll('.tile').forEach(tile => {
+            tile.classList.remove('tappable', 'active-cell');
+        });
+
+        if (this.gameOver) return;
+
+        // Make current row tiles tappable
+        for (let j = 0; j < this.wordLength; j++) {
+            const tile = document.getElementById(`tile-${this.currentRow}-${j}`);
+            if (tile) {
+                tile.classList.add('tappable');
+
+                // Remove existing click listeners to avoid duplicates
+                const newTile = tile.cloneNode(true);
+                tile.parentNode.replaceChild(newTile, tile);
+
+                newTile.addEventListener('click', () => {
+                    this.onTileTap(j);
+                });
+            }
+        }
+
+        // Highlight current cell
+        this.highlightCurrentCell();
+    }
+
+    highlightCurrentCell() {
+        if (!this.isMobile) return;
+
+        // Remove active from all
+        document.querySelectorAll('.tile.active-cell').forEach(t => {
+            t.classList.remove('active-cell');
+        });
+
+        // Add active to current cell
+        const currentTile = document.getElementById(`tile-${this.currentRow}-${this.currentCol}`);
+        if (currentTile && this.currentCol < this.wordLength) {
+            currentTile.classList.add('active-cell');
+        }
+    }
+
+    onTileTap(col) {
+        if (this.gameOver) return;
+
+        // Set current column to tapped position (if it's valid)
+        // Allow tapping on filled cells to replace, or next empty cell
+        if (col <= this.currentCol || col === this.currentCol) {
+            this.currentCol = col;
+            // Trim the guess to match
+            this.currentGuess = this.currentGuess.substring(0, col);
+
+            // Clear tiles from this position
+            for (let j = col; j < this.wordLength; j++) {
+                const tile = document.getElementById(`tile-${this.currentRow}-${j}`);
+                if (tile) {
+                    tile.textContent = '';
+                    tile.classList.remove('filled');
+                }
+            }
+        }
+
+        this.highlightCurrentCell();
+
+        // Focus the hidden input to trigger keyboard
+        if (this.mobileInput) {
+            this.mobileInput.value = '';
+            this.mobileInput.focus();
+        }
+    }
+
+    handleMobileInput(e) {
+        const value = e.target.value;
+        if (value && /^[a-zA-Z]$/.test(value)) {
+            this.handleKeyPress(value.toUpperCase());
+            this.highlightCurrentCell();
+        }
+        // Clear input for next character
+        this.mobileInput.value = '';
     }
 
     selectNewWord() {
@@ -658,6 +1581,61 @@ class HockeyWordle {
         });
     }
 
+    initSportSelector() {
+        // Set the active sport button based on saved preference
+        const savedSport = localStorage.getItem('yinzordle-sport') || 'HOCKEY';
+        const buttons = document.querySelectorAll('.sport-btn');
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.sport === savedSport) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Update subtitle for saved sport
+        if (typeof SPORT_CONFIG !== 'undefined' && SPORT_CONFIG[savedSport]) {
+            const subtitle = document.querySelector('.subtitle');
+            if (subtitle) {
+                subtitle.textContent = SPORT_CONFIG[savedSport].subtitle;
+            }
+        }
+    }
+
+    bindSportSelector() {
+        const sportButtons = document.querySelectorAll('.sport-btn');
+        sportButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const sport = btn.dataset.sport;
+                this.changeSport(sport);
+
+                // Update active state
+                sportButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+    }
+
+    changeSport(sport) {
+        // Switch the sport (updates word lists)
+        if (typeof switchSport === 'function') {
+            switchSport(sport);
+        }
+
+        // Switch the Guessmate character to match the sport
+        if (this.guessmate) {
+            this.guessmate.switchCharacter(sport);
+        }
+
+        // Reset the game with new sport words
+        this.resetGame();
+
+        // Show message about sport change
+        const sportConfig = typeof SPORT_CONFIG !== 'undefined' ? SPORT_CONFIG[sport] : null;
+        if (sportConfig) {
+            this.showMessage(`Switched to ${sportConfig.name} ${sportConfig.icon}`, "info");
+        }
+    }
+
     toggleAdminPanel() {
         let panel = document.getElementById("admin-panel");
 
@@ -728,6 +1706,11 @@ class HockeyWordle {
         this.currentGuess += letter;
         this.guessmate.onLetterTyped(letter, this.currentCol);
         this.currentCol++;
+
+        // Update mobile UI
+        if (this.isMobile) {
+            this.highlightCurrentCell();
+        }
     }
 
     deleteLetter() {
@@ -739,6 +1722,11 @@ class HockeyWordle {
         tile.classList.remove("filled");
         this.currentGuess = this.currentGuess.slice(0, -1);
         this.guessmate.onLetterDeleted();
+
+        // Update mobile UI
+        if (this.isMobile) {
+            this.highlightCurrentCell();
+        }
     }
 
     submitGuess() {
@@ -761,7 +1749,9 @@ class HockeyWordle {
     }
 
     isValidWord(word) {
-        return ALL_VALID_WORDS.includes(word.toUpperCase());
+        // Use dynamic word list that includes sport-specific and common words
+        const validWords = typeof getAllValidWords === 'function' ? getAllValidWords() : ALL_VALID_WORDS;
+        return validWords.includes(word.toUpperCase());
     }
 
     revealGuess() {
@@ -852,16 +1842,29 @@ class HockeyWordle {
             this.showMessage(messages[this.currentRow], "win");
             this.guessmate.onWin(this.currentRow + 1);
             this.showResultModal("win", messages[this.currentRow]);
+            // Clean up mobile on game over
+            if (this.isMobile) {
+                this.cleanupMobile();
+            }
         } else if (this.currentRow >= this.maxAttempts - 1) {
             this.gameOver = true;
             this.showMessage(`GAME OVER! The word was ${this.targetWord}`, "lose");
             this.guessmate.onLose(this.targetWord);
             this.showResultModal("lose", this.targetWord);
+            // Clean up mobile on game over
+            if (this.isMobile) {
+                this.cleanupMobile();
+            }
         } else {
             // Move to next row
             this.currentRow++;
             this.currentCol = 0;
             this.currentGuess = "";
+
+            // Update mobile tiles for new row
+            if (this.isMobile) {
+                this.updateTappableTiles();
+            }
         }
     }
 
@@ -1002,7 +2005,7 @@ class HockeyWordle {
             message.classList.add(type);
         }
 
-        if (type === "error") {
+        if (type === "error" || type === "info") {
             setTimeout(() => {
                 message.textContent = "";
                 message.className = "message";
@@ -1047,10 +2050,116 @@ class HockeyWordle {
 
         // Notify Guessmate
         this.guessmate.onNewGame();
+
+        // Re-setup mobile tiles
+        if (this.isMobile) {
+            this.updateTappableTiles();
+        }
+    }
+}
+
+// Theme Controller
+class ThemeController {
+    constructor() {
+        this.toggleBtn = document.getElementById('theme-toggle');
+        this.init();
+        this.bindEvents();
+    }
+
+    init() {
+        // Check for saved theme preference or system preference
+        const savedTheme = localStorage.getItem('yinzordle-theme');
+        if (savedTheme) {
+            this.setTheme(savedTheme, false);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            this.setTheme('dark', false);
+        }
+
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('yinzordle-theme')) {
+                this.setTheme(e.matches ? 'dark' : 'light', true);
+            }
+        });
+    }
+
+    bindEvents() {
+        if (this.toggleBtn) {
+            this.toggleBtn.addEventListener('click', () => this.toggle());
+        }
+    }
+
+    toggle() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        this.setTheme(newTheme, true);
+    }
+
+    setTheme(theme, animate = true) {
+        if (animate) {
+            document.body.classList.add('theme-transition');
+            setTimeout(() => {
+                document.body.classList.remove('theme-transition');
+            }, 300);
+        }
+
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+
+        localStorage.setItem('yinzordle-theme', theme);
+    }
+}
+
+// Help Modal Controller
+class HelpModal {
+    constructor() {
+        this.modal = document.getElementById('help-modal');
+        this.openBtn = document.getElementById('help-btn');
+        this.closeBtn = document.getElementById('help-close');
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        if (this.openBtn) {
+            this.openBtn.addEventListener('click', () => this.open());
+        }
+        if (this.closeBtn) {
+            this.closeBtn.addEventListener('click', () => this.close());
+        }
+        if (this.modal) {
+            this.modal.addEventListener('click', (e) => {
+                if (e.target === this.modal) {
+                    this.close();
+                }
+            });
+        }
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal?.classList.contains('show')) {
+                this.close();
+            }
+        });
+    }
+
+    open() {
+        if (this.modal) {
+            this.modal.classList.add('show');
+        }
+    }
+
+    close() {
+        if (this.modal) {
+            this.modal.classList.remove('show');
+        }
     }
 }
 
 // Start the game when page loads
 document.addEventListener("DOMContentLoaded", () => {
+    window.themeController = new ThemeController();
     new HockeyWordle();
+    new HelpModal();
 });

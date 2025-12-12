@@ -1,139 +1,173 @@
-// Ice Hockey themed 5-letter words
-let HOCKEY_WORDS = [
-    // Equipment
-    "PUCKS",
-    "STICK",
-    "SKATE",
-    "BLADE",
-    "GLOVE",
-    "VISOR",
-    "STRAP",
-    "LACES",
-    "SHAFT",
-    "TAPE",
+// Sports Word Database
+const SPORTS_WORDS = {
+    // Ice Hockey themed 5-letter words
+    HOCKEY: [
+        // Equipment
+        "PUCKS", "STICK", "SKATE", "BLADE", "GLOVE", "VISOR", "STRAP", "LACES", "SHAFT",
+        // Game Terms
+        "GOALS", "SCORE", "SHOTS", "SAVES", "BLOCK", "CHECK", "ICING", "BENCH", "BOARD",
+        "GLASS", "ZONES", "LINES", "SHIFT", "FIGHT", "BRAWL",
+        // Positions & Players
+        "TEAMS", "DRAFT", "TRADE", "COACH", "SQUAD", "DEPTH",
+        // Actions
+        "SNIPE", "SLAPS", "WRIST", "CLAPS", "DUMPS", "CHASE", "CLEAR", "CYCLE", "CRASH",
+        "GRIND", "PINCH", "SPEED", "TWINE", "MITTS", "WHEEL", "FLOAT", "FLICK",
+        // Rink & Arena
+        "ARENA", "PAINT", "POSTS", "PIPES", "POINT", "SLOTS",
+        // Penalties
+        "MINOR", "MAJOR", "SLASH", "CROSS", "ROUGH", "DELAY", "HOLDS", "TRIPS",
+        // Leagues & Events
+        "FINAL", "ROUND", "CHAMP", "TITLE", "CROWN", "GAMES", "RANKS", "STATS",
+        // Hockey Culture
+        "CELLY", "CHIRP", "SAUCE", "SNIPS",
+        // Misc Hockey Terms
+        "EXTRA", "EMPTY", "SPLIT", "POWER", "PLAYS", "SHORT", "DRAWS", "LOOSE", "STEEL",
+        "SHARP", "EDGES", "PIVOT", "STOPS"
+    ],
 
-    // Game Terms
-    "GOALS",
-    "SCORE",
-    "SHOTS",
-    "SAVES",
-    "BLOCK",
-    "CHECK",
-    "ICING",
-    "CREASE",
-    "BENCH",
-    "BOARD",
-    "GLASS",
-    "ZONES",
-    "LINES",
-    "SHIFT",
-    "FIGHT",
-    "BRAWL",
+    // NFL (American Football) themed 5-letter words
+    NFL: [
+        // Positions
+        "BACKS", "GUARD", "TIGHT", "WIDES", "PUNTS", "KICKS",
+        // Actions
+        "THROW", "CATCH", "BLOCK", "BLITZ", "SACKS", "HIKES", "SNAPS", "FAKES", "JUMPS",
+        "DROPS", "SPINS", "JUKE", "STIFF", "STRIP",
+        // Game Terms
+        "DOWNS", "YARDS", "FIELD", "PLAYS", "DRIVE", "SCORE", "POINT", "EXTRA", "SPOTS",
+        "FLAGS", "CLOCK", "ZONES", "GOALS", "TOUCH", "SUPER", "BOWLS",
+        // Equipment
+        "CLEATS", "PADS", "BALLS", "CHAIN", "POSTS", "GRASS", "TURF",
+        // Formations
+        "SHOTGUN", "TRIPS", "EMPTY", "SPLIT", "BUNCH",
+        // Strategy
+        "BLUFF", "COVER", "PRESS", "SWEEP", "ROUTE", "SLANT", "FLATS", "SEAMS", "CURLS",
+        // Culture
+        "DRAFT", "TRADE", "COACH", "BENCH", "SQUAD", "TEAMS", "CHAMP", "TITLE", "FINAL",
+        "SUPER", "STATS", "RANKS", "CROWN", "GAMES",
+        // Penalties
+        "HOLDS", "CLIPS", "DELAY", "OFFSIDES", "ROUGH", "FALSE",
+        // Misc
+        "CLOCK", "SPIKE", "KNEEL", "AUDIBLE", "HURRY", "QUICK", "POWER", "FORCE", "SPEED"
+    ],
 
-    // Positions & Players
-    "WINGER",
-    "GOALIE",
-    "TEAMS",
-    "DRAFT",
-    "TRADE",
-    "COACH",
-    "SQUAD",
-    "DEPTH",
+    // NBA (Basketball) themed 5-letter words
+    NBA: [
+        // Positions
+        "GUARD", "POINT", "WINGS", "POSTS", "BENCH",
+        // Actions
+        "SHOOT", "DUNK", "BLOCK", "STEAL", "DRIVE", "CROSS", "JUMPS", "DUNKS", "SHOOT",
+        "SWISH", "BRICK", "CLANK", "DRAIN", "BANKS", "ALLEY", "DROPS", "SPINS",
+        // Game Terms
+        "SCORE", "FOUL", "FOULS", "THREE", "LAYUP", "COURT", "HOOP", "HOOPS", "PAINT",
+        "LANES", "ZONES", "CLOCK", "BONUS", "PLAYS", "GAMES", "TRIPS",
+        // Equipment
+        "BALLS", "SHOES", "KICKS", "FLOOR", "GLASS", "BOARD", "RIMS",
+        // Strategy
+        "PRESS", "TRAPS", "PICKS", "ROLLS", "FLARE", "CURLS", "SLASH", "SPACE", "TEMPO",
+        "POSTS", "ELBOW", "SWING",
+        // Culture
+        "DRAFT", "TRADE", "COACH", "SQUAD", "TEAMS", "CHAMP", "TITLE", "FINAL", "RINGS",
+        "STATS", "RANKS", "CROWN", "GAMES", "ARENA",
+        // Positions/Roles
+        "SIXTH", "STARS", "VETS",
+        // Misc
+        "QUICK", "SPEED", "POWER", "FORCE", "EURO", "FLOAT", "TOUCH", "RANGE", "CLUTCH"
+    ],
 
-    // Actions
-    "DEKE",
-    "SNIPE",
-    "SAUCER",
-    "SLAPS",
-    "WRIST",
-    "CLAPS",
-    "DUMPS",
-    "CHASE",
-    "CLEAR",
-    "CYCLE",
-    "CRASH",
-    "GRIND",
-    "PINCH",
-    "SPEED",
-    "SKATES",
-    "TWINE",
-    "MITTS",
-    "WHEEL",
-    "FLOAT",
-    "FLICK",
+    // FA (Football/Soccer) themed 5-letter words
+    FA: [
+        // Positions
+        "BACKS", "WINGS", "MIDS", "GOALIE",
+        // Actions
+        "KICKS", "HEADS", "VOLLEY", "PASS", "CROSS", "SHOOT", "SCORE", "SAVES", "DIVES",
+        "SLIDE", "BLOCK", "CLEAR", "CHIPS", "CURLS", "BENDS", "LOBS",
+        // Game Terms
+        "GOALS", "FOULS", "CARDS", "OFFSIDE", "THROW", "KICKS", "PITCH", "FIELD", "POSTS",
+        "NETS", "GRASS", "TURF", "HALFS", "EXTRA", "DRAWS", "MATCH",
+        // Equipment
+        "BALLS", "BOOTS", "CLEATS", "STUDS", "KITS", "PADS", "GLOVE",
+        // Strategy
+        "PRESS", "TRAP", "SPACE", "WIDTH", "DEPTH", "TEMPO", "BUILD", "HOLD", "PARKS",
+        // Culture
+        "DERBY", "FINAL", "SEMIS", "CHAMP", "TITLE", "CROWN", "LEAGUE", "CUPS", "SQUAD",
+        "TEAMS", "COACH", "BENCH", "SUBS", "DRAFT", "LOANS", "TRADE",
+        // Formations
+        "FLATS", "HIGHS", "PIVOT",
+        // Misc
+        "QUICK", "SPEED", "POWER", "SKILL", "TOUCH", "VISION", "CLASS", "WORLD", "PRIME",
+        "STATS", "RANKS", "GAMES", "ARENA", "FANS", "ULTRA"
+    ]
+};
 
-    // Rink & Arena
-    "ARENA",
-    "PAINT",
-    "POSTS",
-    "PIPES",
-    "POINT",
-    "SLOTS",
-    "CIRCLE",
+// Sport configuration
+const SPORT_CONFIG = {
+    HOCKEY: {
+        name: "Ice Hockey",
+        icon: "🏒",
+        apiQuery: "hockey+ice+puck+rink",
+        subtitle: "Guess the 5-letter ice hockey word!"
+    },
+    NFL: {
+        name: "NFL",
+        icon: "🏈",
+        apiQuery: "football+nfl+touchdown+quarterback",
+        subtitle: "Guess the 5-letter football word!"
+    },
+    NBA: {
+        name: "NBA",
+        icon: "🏀",
+        apiQuery: "basketball+nba+dunk+court",
+        subtitle: "Guess the 5-letter basketball word!"
+    },
+    FA: {
+        name: "Football",
+        icon: "⚽",
+        apiQuery: "soccer+football+goal+pitch",
+        subtitle: "Guess the 5-letter football word!"
+    }
+};
 
-    // Penalties
-    "MINOR",
-    "MAJOR",
-    "HOOKING",
-    "SLASH",
-    "CROSS",
-    "ROUGH",
-    "DELAY",
-    "HOLDS",
-    "TRIPS",
+// Current sport (default to Hockey)
+let currentSport = localStorage.getItem('yinzordle-sport') || 'HOCKEY';
 
-    // Leagues & Events
-    "FINAL",
-    "ROUND",
-    "CHAMP",
-    "TITLE",
-    "CROWN",
-    "GAMES",
-    "RANKS",
-    "STATS",
+// Filter words to only 5-letter words
+function getFilteredWords(sport) {
+    return SPORTS_WORDS[sport]
+        .map(word => word.toUpperCase().trim())
+        .filter(word => word.length === 5 && /^[A-Z]+$/.test(word));
+}
 
-    // Hockey Culture
-    "CELLY",
-    "CHIRP",
-    "SAUCE",
-    "SNIPS",
-    "DANGLE",
-    "FLOW",
-    "MULLET",
-    "BEARD",
-    "BENDER",
-
-    // Misc Hockey Terms
-    "EXTRA",
-    "EMPTY",
-    "SPLIT",
-    "POWER",
-    "PLAYS",
-    "SHORT",
-    "DRAWS",
-    "POKE",
-    "REBOUND",
-    "LOOSE",
-    "STEEL",
-    "SHARP",
-    "EDGES",
-    "PIVOT",
-    "STOPS",
-    "STARTS"
-];
-
-// Filter to only 5-letter words and uppercase
-let VALID_WORDS = HOCKEY_WORDS
-    .map(word => word.toUpperCase().trim())
-    .filter(word => word.length === 5);
-
-// Words that can be answers (subset of valid words)
+// Initialize word lists for current sport
+let VALID_WORDS = getFilteredWords(currentSport);
 let ANSWER_WORDS = [...VALID_WORDS];
 
-// Fetch additional hockey words from Datamuse API
-async function fetchHockeyWordsFromAPI() {
+// Function to switch sport
+function switchSport(sport) {
+    if (!SPORTS_WORDS[sport]) return;
+
+    currentSport = sport;
+    localStorage.setItem('yinzordle-sport', sport);
+
+    VALID_WORDS = getFilteredWords(sport);
+    ANSWER_WORDS = [...VALID_WORDS];
+
+    // Fetch additional words from API
+    fetchWordsFromAPI(sport);
+
+    // Update subtitle
+    const subtitle = document.querySelector('.subtitle');
+    if (subtitle) {
+        subtitle.textContent = SPORT_CONFIG[sport].subtitle;
+    }
+
+    return SPORT_CONFIG[sport];
+}
+
+// Fetch additional words from Datamuse API for the selected sport
+async function fetchWordsFromAPI(sport) {
     try {
-        const response = await fetch('https://api.datamuse.com/words?ml=hockey+ice+puck+rink&max=200');
+        const query = SPORT_CONFIG[sport]?.apiQuery || "sports";
+        const response = await fetch(`https://api.datamuse.com/words?ml=${query}&max=200`);
         const data = await response.json();
 
         const newWords = data
@@ -144,18 +178,17 @@ async function fetchHockeyWordsFromAPI() {
         const uniqueNewWords = newWords.filter(word => !VALID_WORDS.includes(word));
 
         if (uniqueNewWords.length > 0) {
-            HOCKEY_WORDS = [...HOCKEY_WORDS, ...uniqueNewWords];
             VALID_WORDS = [...new Set([...VALID_WORDS, ...uniqueNewWords])];
             ANSWER_WORDS = [...VALID_WORDS];
-            console.log(`Added ${uniqueNewWords.length} new words from API:`, uniqueNewWords);
+            console.log(`Added ${uniqueNewWords.length} new ${sport} words from API:`, uniqueNewWords);
         }
     } catch (error) {
         console.log('Could not fetch additional words from API:', error.message);
     }
 }
 
-// Fetch words on load
-fetchHockeyWordsFromAPI();
+// Fetch words on load for current sport
+fetchWordsFromAPI(currentSport);
 
 // Additional common 5-letter words for valid guesses (players can type these)
 const COMMON_WORDS = [
@@ -229,3 +262,8 @@ const COMMON_WORDS = [
 
 // Combine all valid words for guess validation
 const ALL_VALID_WORDS = [...new Set([...VALID_WORDS, ...COMMON_WORDS])];
+
+// Function to get all valid words (including common words)
+function getAllValidWords() {
+    return [...new Set([...VALID_WORDS, ...COMMON_WORDS])];
+}
