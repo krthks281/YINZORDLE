@@ -16,7 +16,12 @@ class SoundEffects {
         if (this.initialized) return;
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // Immediately resume for mobile browsers (must happen in user gesture)
+            if (this.audioContext.state === 'suspended') {
+                this.audioContext.resume();
+            }
             this.initialized = true;
+            console.log('Sound effects initialized');
         } catch (e) {
             console.warn('Web Audio API not supported');
             this.enabled = false;
@@ -2662,7 +2667,12 @@ class HockeyWordle {
                     button.classList.add("wide");
                 }
 
-                button.addEventListener("click", () => this.handleKeyPress(key));
+                button.addEventListener("click", () => {
+                    // Ensure sound works on mobile
+                    soundEffects.resume();
+                    soundEffects.playKeySound();
+                    this.handleKeyPress(key);
+                });
                 rowDiv.appendChild(button);
             });
 
@@ -2671,14 +2681,19 @@ class HockeyWordle {
     }
 
     bindEvents() {
-        // Initialize sound effects on first user interaction
+        // Initialize sound effects on first user interaction (including mobile touch)
         const initSoundOnInteraction = () => {
             soundEffects.init();
+            soundEffects.resume(); // Important for mobile browsers
             document.removeEventListener('click', initSoundOnInteraction);
             document.removeEventListener('keydown', initSoundOnInteraction);
+            document.removeEventListener('touchstart', initSoundOnInteraction);
+            document.removeEventListener('touchend', initSoundOnInteraction);
         };
         document.addEventListener('click', initSoundOnInteraction);
         document.addEventListener('keydown', initSoundOnInteraction);
+        document.addEventListener('touchstart', initSoundOnInteraction, { passive: true });
+        document.addEventListener('touchend', initSoundOnInteraction, { passive: true });
 
         // Physical keyboard
         document.addEventListener("keydown", (e) => {
@@ -2704,10 +2719,13 @@ class HockeyWordle {
             if (this.gameOver) return;
 
             if (e.key === "Enter") {
+                soundEffects.playKeySound();
                 this.handleKeyPress("ENTER");
             } else if (e.key === "Backspace") {
+                soundEffects.playKeySound();
                 this.handleKeyPress("⌫");
             } else if (/^[a-zA-Z]$/.test(e.key)) {
+                soundEffects.playKeySound();
                 this.handleKeyPress(e.key.toUpperCase());
             }
         });
@@ -2731,47 +2749,71 @@ class HockeyWordle {
     }
 
     setupSecretGesture() {
+        // Triple-tap on title for Settings
         const title = document.querySelector('header h1');
-        if (!title) return;
+        if (title) {
+            let tapCount = 0;
+            let tapTimer = null;
+            const TAP_TIMEOUT = 500;
 
-        let tapCount = 0;
-        let tapTimer = null;
-        const TAP_TIMEOUT = 500; // Reset after 500ms of no taps
+            title.addEventListener('click', (e) => {
+                e.preventDefault();
+                tapCount++;
 
-        title.addEventListener('click', (e) => {
-            // Prevent default to avoid any text selection
-            e.preventDefault();
+                if (tapTimer) clearTimeout(tapTimer);
 
-            tapCount++;
+                tapTimer = setTimeout(() => {
+                    tapCount = 0;
+                }, TAP_TIMEOUT);
 
-            // Clear existing timer
-            if (tapTimer) {
-                clearTimeout(tapTimer);
-            }
+                // 3 taps = Settings panel
+                if (tapCount === 3) {
+                    settingsManager.createPanel();
+                    tapCount = 0;
+                    clearTimeout(tapTimer);
+                }
+            });
 
-            // Set timer to reset tap count
-            tapTimer = setTimeout(() => {
-                tapCount = 0;
-            }, TAP_TIMEOUT);
+            title.style.cursor = 'pointer';
+            title.style.userSelect = 'none';
+            title.style.webkitUserSelect = 'none';
+        }
 
-            // 3 taps = Settings panel
-            if (tapCount === 3) {
-                settingsManager.createPanel();
-                tapCount = 0;
-                clearTimeout(tapTimer);
-            }
-            // 5 taps = Admin panel (word list / hints)
-            else if (tapCount === 5) {
-                this.toggleAdminPanel();
-                tapCount = 0;
-                clearTimeout(tapTimer);
-            }
-        });
+        // Long press on help button for Admin panel
+        const helpBtn = document.getElementById('help-btn');
+        if (helpBtn) {
+            let pressTimer = null;
+            const LONG_PRESS_DURATION = 800; // 0.8 seconds
 
-        // Add visual hint that title is tappable (subtle)
-        title.style.cursor = 'pointer';
-        title.style.userSelect = 'none';
-        title.style.webkitUserSelect = 'none';
+            const startPress = (e) => {
+                pressTimer = setTimeout(() => {
+                    this.toggleAdminPanel();
+                    // Vibrate if available (mobile feedback)
+                    if (navigator.vibrate) {
+                        navigator.vibrate(50);
+                    }
+                }, LONG_PRESS_DURATION);
+            };
+
+            const cancelPress = () => {
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+            };
+
+            // Mouse events (desktop)
+            helpBtn.addEventListener('mousedown', startPress);
+            helpBtn.addEventListener('mouseup', cancelPress);
+            helpBtn.addEventListener('mouseleave', cancelPress);
+
+            // Touch events (mobile)
+            helpBtn.addEventListener('touchstart', (e) => {
+                startPress(e);
+            });
+            helpBtn.addEventListener('touchend', cancelPress);
+            helpBtn.addEventListener('touchcancel', cancelPress);
+        }
     }
 
     initSportSelector() {
