@@ -205,7 +205,7 @@ header h1 {
     flex-direction: column;
     align-items: center;
     gap: 5px;
-    margin-bottom: 20px;
+    margin-bottom: 32px;
 }
 
 .row {
@@ -293,6 +293,7 @@ header h1 {
     flex-direction: column;
     align-items: center;
     gap: 5px;
+    margin-top: 16px;
     margin-bottom: 16px;
 }
 
@@ -3506,11 +3507,11 @@ header {
     }
 }
 
-/* Responsive - Mobile (hide keyboard, show mobile controls) */
+/* Responsive - Mobile (show on-screen keyboard) */
 @media (max-width: 500px) {
     body {
         padding: 8px;
-        padding-bottom: 100px;
+        padding-bottom: 20px;
     }
 
     .game-container {
@@ -3529,12 +3530,40 @@ header {
         margin-bottom: 10px;
     }
 
+    /* Show on-screen keyboard on mobile */
     .keyboard {
+        display: flex !important;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 24px;
+        padding: 0 4px;
+    }
+
+    .keyboard-row {
+        gap: 3px;
+    }
+
+    .keyboard button {
+        min-width: 26px;
+        height: 42px;
+        font-size: 0.75rem;
+        padding: 0 6px;
+        border-radius: 4px;
+    }
+
+    .keyboard button.wide {
+        min-width: 48px;
+        font-size: 0.65rem;
+    }
+
+    /* Hide mobile controls since we use on-screen keyboard */
+    .mobile-controls {
         display: none !important;
     }
 
-    .mobile-controls {
-        display: flex;
+    /* Hide the mobile input to prevent native keyboard */
+    .mobile-input {
+        display: none !important;
     }
 
     .mobile-tap-hint {
@@ -3553,7 +3582,7 @@ header {
 
     .game-board {
         gap: 4px;
-        margin-bottom: 8px;
+        margin-bottom: 16px;
     }
 
     .new-game-btn {
@@ -3563,12 +3592,7 @@ header {
         margin-bottom: 14px;
     }
 
-    .mobile-controls {
-        width: calc(5 * 48px + 4 * 4px); /* Match mobile tile row width */
-        gap: 4px;
-        margin-top: 24px;
-        margin-bottom: 20px;
-    }
+    /* mobile-controls hidden - using on-screen keyboard instead */
 
     .instructions {
         padding-top: 14px;
@@ -3657,22 +3681,16 @@ header {
         width: calc(5 * 42px + 4 * 3px); /* Match extra small tile row */
     }
 
-    .mobile-controls {
-        width: calc(5 * 42px + 4 * 3px); /* Match extra small tile row */
-        gap: 3px;
-        margin-top: 20px;
-        margin-bottom: 16px;
+    /* Keyboard button adjustments for extra small screens */
+    .keyboard button {
+        min-width: 22px;
+        height: 38px;
+        font-size: 0.7rem;
+        padding: 0 4px;
     }
 
-    .mobile-btn {
-        padding: 8px 12px;
-    }
-
-    .mobile-btn .btn-icon {
-        font-size: 0.8125rem;
-    }
-
-    .mobile-btn .btn-text {
-        font-size: 0.75rem;
+    .keyboard button.wide {
+        min-width: 40px;
+        font-size: 0.6rem;
     }
 }

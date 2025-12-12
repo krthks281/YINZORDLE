@@ -2526,40 +2526,12 @@ class HockeyWordle {
     }
 
     setupMobile() {
-        this.mobileInput = document.getElementById('mobile-input');
-
-        // Make current row tiles tappable
+        // Make current row tiles tappable for visual feedback
         this.updateTappableTiles();
 
-        // Bind mobile input events
-        if (this.mobileInput) {
-            this.mobileInput.addEventListener('input', (e) => this.handleMobileInput(e));
-            this.mobileInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace') {
-                    e.preventDefault();
-                    this.handleKeyPress('⌫');
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    this.handleKeyPress('ENTER');
-                }
-            });
-        }
-
-        // Bind mobile control buttons
-        const undoBtn = document.getElementById('mobile-undo');
-        const submitBtn = document.getElementById('mobile-submit');
-
-        if (undoBtn) {
-            undoBtn.addEventListener('click', () => {
-                this.handleKeyPress('⌫');
-            });
-        }
-
-        if (submitBtn) {
-            submitBtn.addEventListener('click', () => {
-                this.handleKeyPress('ENTER');
-            });
-        }
+        // Note: We use the on-screen keyboard instead of native keyboard
+        // The mobile input element is hidden via CSS to prevent native keyboard
+        // Mobile control buttons are also hidden since on-screen keyboard has Enter/Backspace
     }
 
     cleanupMobile() {
@@ -2635,23 +2607,10 @@ class HockeyWordle {
         }
 
         this.highlightCurrentCell();
-
-        // Focus the hidden input to trigger keyboard
-        if (this.mobileInput) {
-            this.mobileInput.value = '';
-            this.mobileInput.focus();
-        }
+        // On-screen keyboard is used instead of native keyboard
     }
 
-    handleMobileInput(e) {
-        const value = e.target.value;
-        if (value && /^[a-zA-Z]$/.test(value)) {
-            this.handleKeyPress(value.toUpperCase());
-            this.highlightCurrentCell();
-        }
-        // Clear input for next character
-        this.mobileInput.value = '';
-    }
+    // handleMobileInput removed - using on-screen keyboard instead
 
     selectNewWord() {
         const randomIndex = Math.floor(Math.random() * ANSWER_WORDS.length);
@@ -2723,6 +2682,11 @@ class HockeyWordle {
 
         // Physical keyboard
         document.addEventListener("keydown", (e) => {
+            // Ignore if typing in an input field (prevents duplicate input)
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+
             // Admin shortcut: Ctrl+Shift+A (word list)
             if (e.ctrlKey && e.shiftKey && e.key.toUpperCase() === "A") {
                 e.preventDefault();
@@ -2761,6 +2725,53 @@ class HockeyWordle {
                 window.location.href = 'landing.html';
             });
         }
+
+        // Secret mobile gesture: Multi-tap on title for admin access
+        this.setupSecretGesture();
+    }
+
+    setupSecretGesture() {
+        const title = document.querySelector('header h1');
+        if (!title) return;
+
+        let tapCount = 0;
+        let tapTimer = null;
+        const TAP_TIMEOUT = 500; // Reset after 500ms of no taps
+
+        title.addEventListener('click', (e) => {
+            // Prevent default to avoid any text selection
+            e.preventDefault();
+
+            tapCount++;
+
+            // Clear existing timer
+            if (tapTimer) {
+                clearTimeout(tapTimer);
+            }
+
+            // Set timer to reset tap count
+            tapTimer = setTimeout(() => {
+                tapCount = 0;
+            }, TAP_TIMEOUT);
+
+            // 3 taps = Settings panel
+            if (tapCount === 3) {
+                settingsManager.createPanel();
+                tapCount = 0;
+                clearTimeout(tapTimer);
+            }
+            // 5 taps = Admin panel (word list / hints)
+            else if (tapCount === 5) {
+                this.toggleAdminPanel();
+                tapCount = 0;
+                clearTimeout(tapTimer);
+            }
+        });
+
+        // Add visual hint that title is tappable (subtle)
+        title.style.cursor = 'pointer';
+        title.style.userSelect = 'none';
+        title.style.webkitUserSelect = 'none';
     }
 
     initSportSelector() {
