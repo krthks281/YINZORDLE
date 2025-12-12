@@ -5,21 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YINZORDLE</title>
     <link rel="stylesheet" href="style.css">
+    <script>
+        // Redirect to landing page if user hasn't entered their name
+        if (!localStorage.getItem('yinzordle_playerName')) {
+            window.location.href = 'landing.html';
+        }
+    </script>
 </head>
 <body>
     <div class="game-container">
         <header>
-            <button id="help-btn" class="help-btn" aria-label="How to Play">?</button>
+            <button id="quit-btn" class="quit-btn" aria-label="Quit Game" title="Back to Home">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 12H5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M10 17L5 12L10 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button id="help-btn" class="help-btn" aria-label="How to Play">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                    <path d="M9.5 9.5C9.5 8.12 10.62 7 12 7C13.38 7 14.5 8.12 14.5 9.5C14.5 10.88 13.38 12 12 12V13.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="17" r="1" fill="currentColor"/>
+                </svg>
+            </button>
             <h1>YINZORDLE</h1>
-            <p class="subtitle">Guess the 5-letter ice hockey word!</p>
-
-            <!-- Sport Selector -->
-            <div id="sport-selector" class="sport-selector">
-                <button class="sport-btn active" data-sport="HOCKEY" title="Ice Hockey">🏒</button>
-                <button class="sport-btn" data-sport="NFL" title="NFL">🏈</button>
-                <button class="sport-btn" data-sport="NBA" title="NBA">🏀</button>
-                <button class="sport-btn" data-sport="FA" title="Football">⚽</button>
-            </div>
+            <p class="subtitle" id="subtitle">Guess the 5-letter NHL word!</p>
         </header>
 
         <div id="message" class="message"></div>
@@ -56,7 +66,7 @@
                     <h3>How to Play</h3>
                     <button id="help-close" class="help-close">&times;</button>
                 </div>
-                <p class="help-intro">Guess the hockey-related word in 6 tries.</p>
+                <p class="help-intro">Guess the sports-related word in 6 tries.</p>
                 <div class="help-examples">
                     <div class="example">
                         <div class="example-tiles">
@@ -95,7 +105,12 @@
 
     <!-- Anime.js for 3D animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+    <!-- Canvas Confetti for celebration effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <!-- Lottie Player for animated mascots -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.8/dist/lottie-player.js"></script>
     <script src="words.js"></script>
+    <script src="mascot.js"></script>
     <script src="game.js"></script>
 </body>
 </html>

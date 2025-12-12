@@ -1,5 +1,668 @@
 // Hockey Wordle Game Logic
 
+// =====================================================
+// SOUND EFFECTS SYSTEM - Web Audio API Based
+// =====================================================
+
+class SoundEffects {
+    constructor() {
+        this.audioContext = null;
+        this.enabled = true;
+        this.volume = 0.5;
+        this.initialized = false;
+    }
+
+    init() {
+        if (this.initialized) return;
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.initialized = true;
+        } catch (e) {
+            console.warn('Web Audio API not supported');
+            this.enabled = false;
+        }
+    }
+
+    // Ensure audio context is running (needed for user gesture requirement)
+    resume() {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+    }
+
+    // Generate a pleasant tone
+    playTone(frequency, duration, type = 'sine', volumeMultiplier = 1) {
+        if (!this.enabled || !this.audioContext) return;
+        this.resume();
+
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+
+        // Envelope for pleasant sound
+        const vol = this.volume * volumeMultiplier;
+        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(vol, this.audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + duration);
+    }
+
+    // Win sound - triumphant ascending arpeggio
+    playWinSound() {
+        if (!this.enabled || !this.audioContext) return;
+        this.resume();
+
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        const delays = [0, 0.1, 0.2, 0.35];
+        const durations = [0.3, 0.3, 0.3, 0.6];
+
+        notes.forEach((freq, i) => {
+            setTimeout(() => {
+                this.playTone(freq, durations[i], 'sine', 0.6);
+                // Add harmonics for richness
+                this.playTone(freq * 2, durations[i] * 0.5, 'sine', 0.2);
+            }, delays[i] * 1000);
+        });
+
+        // Final chord shimmer
+        setTimeout(() => {
+            this.playShimmer();
+        }, 500);
+    }
+
+    // Shimmer effect for celebrations
+    playShimmer() {
+        if (!this.enabled || !this.audioContext) return;
+
+        const freqs = [1318.51, 1567.98, 2093.00]; // E6, G6, C7
+        freqs.forEach((freq, i) => {
+            setTimeout(() => {
+                this.playTone(freq, 0.4, 'sine', 0.15);
+            }, i * 50);
+        });
+    }
+
+    // Lose sound - gentle descending, encouraging
+    playLoseSound() {
+        if (!this.enabled || !this.audioContext) return;
+        this.resume();
+
+        const notes = [392.00, 349.23, 329.63, 293.66]; // G4, F4, E4, D4
+        const delays = [0, 0.15, 0.3, 0.5];
+        const durations = [0.25, 0.25, 0.25, 0.5];
+
+        notes.forEach((freq, i) => {
+            setTimeout(() => {
+                this.playTone(freq, durations[i], 'triangle', 0.4);
+            }, delays[i] * 1000);
+        });
+    }
+
+    // Tile flip sound
+    playFlipSound(index = 0) {
+        if (!this.enabled || !this.audioContext) return;
+        this.resume();
+
+        const baseFreq = 300 + (index * 50);
+        this.playTone(baseFreq, 0.1, 'sine', 0.2);
+    }
+
+    // Correct letter sound
+    playCorrectSound() {
+        if (!this.enabled || !this.audioContext) return;
+        this.resume();
+        this.playTone(880, 0.15, 'sine', 0.3);
+    }
+
+    // Pop sound for confetti
+    playPopSound() {
+        if (!this.enabled || !this.audioContext) return;
+        this.resume();
+
+        // White noise burst for pop
+        const bufferSize = this.audioContext.sampleRate * 0.05;
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+        }
+
+        const source = this.audioContext.createBufferSource();
+        const gainNode = this.audioContext.createGain();
+
+        source.buffer = buffer;
+        source.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        gainNode.gain.setValueAtTime(this.volume * 0.3, this.audioContext.currentTime);
+
+        source.start();
+    }
+
+    // Error/invalid word sound
+    playErrorSound() {
+        if (!this.enabled || !this.audioContext) return;
+        this.resume();
+
+        this.playTone(200, 0.15, 'sawtooth', 0.2);
+        setTimeout(() => {
+            this.playTone(180, 0.15, 'sawtooth', 0.15);
+        }, 100);
+    }
+
+    // Key press sound
+    playKeySound() {
+        if (!this.enabled || !this.audioContext) return;
+        this.resume();
+        this.playTone(600 + Math.random() * 100, 0.05, 'sine', 0.1);
+    }
+
+    // Firework launch sound (whoosh)
+    playFireworkLaunch() {
+        if (!this.enabled || !this.audioContext) return;
+        this.resume();
+
+        // Rising whistle effect
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.3);
+
+        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(this.volume * 0.15, this.audioContext.currentTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.35);
+
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.35);
+    }
+
+    // Firework burst sound (sparkle explosion)
+    playFireworkBurst() {
+        if (!this.enabled || !this.audioContext) return;
+        this.resume();
+
+        // Create a burst of noise with high frequency shimmer
+        const bufferSize = this.audioContext.sampleRate * 0.15;
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+            // Mix of noise and shimmer
+            const envelope = Math.pow(1 - i / bufferSize, 1.5);
+            data[i] = (Math.random() * 2 - 1) * envelope * 0.5 +
+                      Math.sin(i * 0.1) * envelope * 0.3 +
+                      Math.sin(i * 0.05) * envelope * 0.2;
+        }
+
+        const source = this.audioContext.createBufferSource();
+        const gainNode = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(2000, this.audioContext.currentTime);
+
+        source.buffer = buffer;
+        source.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        gainNode.gain.setValueAtTime(this.volume * 0.4, this.audioContext.currentTime);
+
+        source.start();
+
+        // Add sparkle tones
+        const sparkleFreqs = [1500, 2000, 2500, 3000];
+        sparkleFreqs.forEach((freq, i) => {
+            setTimeout(() => {
+                this.playTone(freq, 0.1, 'sine', 0.08);
+            }, i * 20);
+        });
+    }
+}
+
+// Global sound effects instance
+const soundEffects = new SoundEffects();
+
+// =====================================================
+// CONFETTI & CELEBRATION EFFECTS SYSTEM
+// Using canvas-confetti library for professional effects
+// =====================================================
+
+class CelebrationEffects {
+    constructor() {
+        // Sport-specific color palettes
+        this.confettiColors = {
+            HOCKEY: ['#007AFF', '#5856d6', '#87ceeb', '#ffffff', '#34c759'],
+            NFL: ['#ffd700', '#ff6b35', '#ff4444', '#ffffff', '#013369'],
+            NBA: ['#17408B', '#C9082A', '#ff6b35', '#ffffff', '#ffd700'],
+            FA: ['#37003c', '#00ff85', '#ffd700', '#ffffff', '#e90052']
+        };
+
+        // Create custom canvas for confetti with high z-index (above modal)
+        this.confettiCanvas = null;
+        this.myConfetti = null;
+    }
+
+    // Initialize or get the confetti canvas
+    getConfetti() {
+        if (typeof confetti === 'undefined') {
+            console.warn('canvas-confetti not loaded');
+            return null;
+        }
+
+        // Create custom canvas if it doesn't exist
+        if (!this.confettiCanvas) {
+            this.confettiCanvas = document.createElement('canvas');
+            this.confettiCanvas.id = 'confetti-canvas';
+            this.confettiCanvas.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 10000;
+            `;
+            document.body.appendChild(this.confettiCanvas);
+
+            // Create confetti instance bound to this canvas
+            this.myConfetti = confetti.create(this.confettiCanvas, {
+                resize: true,
+                useWorker: true
+            });
+        }
+
+        return this.myConfetti;
+    }
+
+    // Create screen flash effect
+    createScreenFlash(type = 'win') {
+        const flash = document.createElement('div');
+        flash.className = `screen-flash ${type}`;
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 800);
+    }
+
+    // Create shockwave effect
+    createShockwave(type = 'win') {
+        const shockwave = document.createElement('div');
+        shockwave.className = `shockwave ${type}`;
+        document.body.appendChild(shockwave);
+        setTimeout(() => shockwave.remove(), 1000);
+    }
+
+    // Create multiple shockwave rings
+    createShockwaveRings(count = 3) {
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const ring = document.createElement('div');
+                ring.className = 'shockwave-ring';
+                document.body.appendChild(ring);
+                setTimeout(() => ring.remove(), 1200);
+            }, i * 150);
+        }
+    }
+
+    // =====================================================
+    // CANVAS-CONFETTI BASED CELEBRATIONS
+    // =====================================================
+
+    // Basic confetti burst from center
+    createConfettiExplosion(sport = 'HOCKEY') {
+        const myConfetti = this.getConfetti();
+        if (!myConfetti) return;
+
+        const colors = this.confettiColors[sport] || this.confettiColors.HOCKEY;
+
+        // Play sound
+        soundEffects.playPopSound();
+
+        // Initial big burst
+        myConfetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: colors,
+            disableForReducedMotion: true
+        });
+
+        // Follow-up bursts from sides
+        setTimeout(() => {
+            myConfetti({
+                particleCount: 50,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: colors
+            });
+            myConfetti({
+                particleCount: 50,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: colors
+            });
+        }, 250);
+
+        // Continuous rain for 3 seconds
+        const duration = 3000;
+        const end = Date.now() + duration;
+
+        const frame = () => {
+            myConfetti({
+                particleCount: 2,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0, y: 0.5 },
+                colors: colors
+            });
+            myConfetti({
+                particleCount: 2,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1, y: 0.5 },
+                colors: colors
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        };
+
+        setTimeout(frame, 500);
+    }
+
+    // NFL Fireworks show - realistic stadium celebration
+    createFireworksShow() {
+        const myConfetti = this.getConfetti();
+        if (!myConfetti) return;
+
+        const duration = 5000;
+        const animationEnd = Date.now() + duration;
+        const colors = ['#ffd700', '#ff4444', '#00ff88', '#00bfff', '#ff69b4', '#ffffff'];
+
+        // Play firework sound
+        soundEffects.playFireworkBurst();
+
+        const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+        const interval = setInterval(() => {
+            const timeLeft = animationEnd - Date.now();
+
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                // Grand finale
+                this.createFireworksFinale(colors);
+                return;
+            }
+
+            // Random firework bursts across the screen
+            myConfetti({
+                particleCount: Math.floor(randomInRange(20, 40)),
+                startVelocity: randomInRange(25, 45),
+                spread: randomInRange(50, 80),
+                origin: {
+                    x: randomInRange(0.1, 0.9),
+                    y: randomInRange(0.2, 0.5)
+                },
+                colors: [colors[Math.floor(Math.random() * colors.length)]],
+                ticks: 300,
+                gravity: 0.8,
+                decay: 0.92,
+                scalar: randomInRange(0.8, 1.2)
+            });
+
+            // Play burst sound occasionally
+            if (Math.random() > 0.7) {
+                soundEffects.playFireworkBurst();
+            }
+        }, 300);
+    }
+
+    // Grand finale for fireworks
+    createFireworksFinale(colors) {
+        const myConfetti = this.getConfetti();
+        if (!myConfetti) return;
+
+        soundEffects.playFireworkBurst();
+
+        // Multiple simultaneous bursts
+        const positions = [0.2, 0.35, 0.5, 0.65, 0.8];
+
+        positions.forEach((x, i) => {
+            setTimeout(() => {
+                myConfetti({
+                    particleCount: 80,
+                    startVelocity: 45,
+                    spread: 100,
+                    origin: { x: x, y: 0.4 },
+                    colors: colors,
+                    ticks: 400,
+                    gravity: 0.6
+                });
+                soundEffects.playPopSound();
+            }, i * 100);
+        });
+
+        // Final big burst from center
+        setTimeout(() => {
+            myConfetti({
+                particleCount: 150,
+                startVelocity: 55,
+                spread: 180,
+                origin: { x: 0.5, y: 0.5 },
+                colors: colors,
+                ticks: 500,
+                gravity: 0.5
+            });
+            soundEffects.playWinSound();
+        }, 600);
+    }
+
+    // Hockey - Snow/ice effect with confetti
+    createHockeyCelebration() {
+        const myConfetti = this.getConfetti();
+        if (!myConfetti) return;
+
+        const colors = this.confettiColors.HOCKEY;
+
+        // Initial burst
+        myConfetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: colors
+        });
+
+        soundEffects.playPopSound();
+
+        // Snow-like falling effect
+        const duration = 4000;
+        const end = Date.now() + duration;
+
+        const snowFrame = () => {
+            myConfetti({
+                particleCount: 1,
+                startVelocity: 0,
+                ticks: 300,
+                origin: {
+                    x: Math.random(),
+                    y: 0
+                },
+                colors: ['#ffffff', '#87ceeb'],
+                shapes: ['circle'],
+                gravity: 0.3,
+                scalar: 0.6,
+                drift: Math.random() - 0.5
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(snowFrame);
+            }
+        };
+
+        setTimeout(snowFrame, 300);
+
+        // Side cannons
+        setTimeout(() => {
+            myConfetti({ particleCount: 40, angle: 60, spread: 55, origin: { x: 0 }, colors });
+            myConfetti({ particleCount: 40, angle: 120, spread: 55, origin: { x: 1 }, colors });
+        }, 200);
+    }
+
+    // NBA - Basketball themed with bounce effect
+    createNBACelebration() {
+        const myConfetti = this.getConfetti();
+        if (!myConfetti) return;
+
+        const colors = this.confettiColors.NBA;
+
+        soundEffects.playPopSound();
+
+        // Slam dunk burst from top
+        myConfetti({
+            particleCount: 80,
+            startVelocity: 60,
+            spread: 80,
+            origin: { x: 0.5, y: 0 },
+            colors: colors,
+            gravity: 1.2
+        });
+
+        // Side bursts
+        setTimeout(() => {
+            myConfetti({
+                particleCount: 50,
+                angle: 45,
+                spread: 60,
+                origin: { x: 0, y: 0.7 },
+                colors: colors,
+                startVelocity: 45
+            });
+            myConfetti({
+                particleCount: 50,
+                angle: 135,
+                spread: 60,
+                origin: { x: 1, y: 0.7 },
+                colors: colors,
+                startVelocity: 45
+            });
+        }, 200);
+
+        // Continuous celebration
+        const end = Date.now() + 3000;
+        const frame = () => {
+            myConfetti({
+                particleCount: 3,
+                spread: 50,
+                origin: { x: Math.random(), y: 0.3 },
+                colors: colors
+            });
+            if (Date.now() < end) requestAnimationFrame(frame);
+        };
+        setTimeout(frame, 400);
+    }
+
+    // FA/Soccer - Goal celebration with streamers
+    createFACelebration() {
+        const myConfetti = this.getConfetti();
+        if (!myConfetti) return;
+
+        const colors = this.confettiColors.FA;
+
+        soundEffects.playPopSound();
+
+        // Goal explosion
+        myConfetti({
+            particleCount: 120,
+            spread: 100,
+            origin: { y: 0.6 },
+            colors: colors,
+            shapes: ['square', 'circle'],
+            scalar: 1.2
+        });
+
+        // Streamer-like effect from sides
+        const streamers = () => {
+            myConfetti({
+                particleCount: 5,
+                angle: 60,
+                spread: 30,
+                origin: { x: 0 },
+                colors: colors,
+                shapes: ['square'],
+                scalar: 2,
+                drift: 1
+            });
+            myConfetti({
+                particleCount: 5,
+                angle: 120,
+                spread: 30,
+                origin: { x: 1 },
+                colors: colors,
+                shapes: ['square'],
+                scalar: 2,
+                drift: -1
+            });
+        };
+
+        // Multiple streamer waves
+        for (let i = 0; i < 5; i++) {
+            setTimeout(streamers, i * 300);
+        }
+    }
+
+    // Lose state - subtle, encouraging effect
+    createLoseEffect() {
+        const myConfetti = this.getConfetti();
+        if (!myConfetti) return;
+
+        // Gentle falling particles - encouraging not sad
+        myConfetti({
+            particleCount: 30,
+            spread: 60,
+            origin: { y: 0.7 },
+            colors: ['#ff9f0a', '#ffd60a', '#ffffff'],
+            gravity: 0.5,
+            scalar: 0.8,
+            ticks: 200
+        });
+    }
+
+    // Clean up - canvas-confetti handles its own cleanup
+    cleanup() {
+        // Remove any lingering DOM effects
+        document.querySelectorAll('.screen-flash, .shockwave, .shockwave-ring').forEach(el => el.remove());
+
+        // Reset our custom confetti instance
+        if (this.myConfetti && this.myConfetti.reset) {
+            this.myConfetti.reset();
+        }
+
+        // Remove the canvas if it exists
+        if (this.confettiCanvas) {
+            this.confettiCanvas.remove();
+            this.confettiCanvas = null;
+            this.myConfetti = null;
+        }
+    }
+}
+
+
+// Global celebration effects instance
+const celebrationEffects = new CelebrationEffects();
+
 // Sport-specific coach character configurations
 const COACH_CHARACTERS = {
     HOCKEY: {
@@ -334,6 +997,11 @@ class SettingsManager {
                 snowEnabled: true,
                 characterEnabled: true
             },
+            // Sound settings
+            sound: {
+                enabled: true,
+                volume: 0.5
+            },
             // Font settings
             font: {
                 family: 'Segoe UI',
@@ -392,6 +1060,12 @@ class SettingsManager {
         const guessmate = document.getElementById('guessmate');
         if (guessmate) {
             guessmate.style.display = this.settings.guessmate.enabled ? 'block' : 'none';
+        }
+
+        // Apply sound settings
+        if (this.settings.sound) {
+            soundEffects.enabled = this.settings.sound.enabled;
+            soundEffects.volume = this.settings.sound.volume;
         }
     }
 
@@ -601,10 +1275,12 @@ class GuessmatAnimator {
         this.guessmate = guessmate;
         this.currentAnimation = null;
         this.floatAnimation = null;
+        this.talkingAnimation = null;
+        this.pulseAnimation = null;
     }
 
-    // 3D Speech bubble pop animation
-    showSpeechBubble(speechBubble) {
+    // 3D Speech bubble pop animation with emotion support
+    showSpeechBubble(speechBubble, emotion = 'neutral') {
         // Kill any existing animations
         if (this.currentAnimation) {
             this.currentAnimation.pause();
@@ -614,11 +1290,15 @@ class GuessmatAnimator {
         const bubbles = speechBubble.querySelectorAll('.bubble');
         const textContainer = speechBubble.querySelector('.speech-text-container');
 
+        // Emotion-based animation parameters
+        const emotionParams = this.getEmotionAnimationParams(emotion);
+
         // Reset initial state
         anime.set(speechBubble, { opacity: 0 });
         anime.set(cloudShape, {
             scale: 0,
-            rotateX: 45,
+            rotateX: emotionParams.startRotateX,
+            rotateZ: 0,
             translateZ: -30
         });
         anime.set(bubbles, { scale: 0, opacity: 0 });
@@ -627,9 +1307,9 @@ class GuessmatAnimator {
         // Show the bubble
         speechBubble.classList.add('show');
 
-        // Create timeline
+        // Create timeline with emotion-based easing
         this.currentAnimation = anime.timeline({
-            easing: 'easeOutElastic(1, 0.6)'
+            easing: emotionParams.easing
         })
         .add({
             targets: speechBubble,
@@ -639,17 +1319,18 @@ class GuessmatAnimator {
         })
         .add({
             targets: cloudShape,
-            scale: [0, 1.15, 1],
-            rotateX: [45, -5, 0],
+            scale: [0, emotionParams.bounceScale, 1],
+            rotateX: [emotionParams.startRotateX, emotionParams.midRotateX, 0],
+            rotateZ: [emotionParams.startRotateZ, emotionParams.midRotateZ, 0],
             translateZ: [-30, 10, 0],
-            duration: 600,
-            easing: 'spring(1, 80, 10, 0)'
+            duration: emotionParams.duration,
+            easing: emotionParams.springEasing
         }, '-=50')
         .add({
             targets: bubbles,
             scale: [0, 1.3, 1],
             opacity: [0, 1],
-            delay: anime.stagger(80, { start: 0 }),
+            delay: anime.stagger(emotionParams.bubbleStagger, { start: 0 }),
             duration: 400,
             easing: 'spring(1, 90, 12, 0)'
         }, '-=400')
@@ -661,12 +1342,86 @@ class GuessmatAnimator {
             easing: 'easeOutCubic'
         }, '-=300');
 
-        // Start floating animation after pop
+        // Start emotion-specific floating animation after pop
         this.currentAnimation.finished.then(() => {
-            this.startFloating(cloudShape);
+            this.startFloating(cloudShape, emotion);
         });
 
         return this.currentAnimation;
+    }
+
+    // Get animation parameters based on emotion
+    getEmotionAnimationParams(emotion) {
+        const params = {
+            neutral: {
+                startRotateX: 45,
+                midRotateX: -5,
+                startRotateZ: 0,
+                midRotateZ: 0,
+                bounceScale: 1.15,
+                duration: 600,
+                easing: 'easeOutElastic(1, 0.6)',
+                springEasing: 'spring(1, 80, 10, 0)',
+                bubbleStagger: 80
+            },
+            excited: {
+                startRotateX: 60,
+                midRotateX: -10,
+                startRotateZ: -10,
+                midRotateZ: 5,
+                bounceScale: 1.25,
+                duration: 500,
+                easing: 'easeOutElastic(1, 0.4)',
+                springEasing: 'spring(1, 60, 8, 0)',
+                bubbleStagger: 50
+            },
+            encouraging: {
+                startRotateX: 30,
+                midRotateX: -3,
+                startRotateZ: 5,
+                midRotateZ: -2,
+                bounceScale: 1.12,
+                duration: 650,
+                easing: 'easeOutElastic(1, 0.7)',
+                springEasing: 'spring(1, 85, 12, 0)',
+                bubbleStagger: 90
+            },
+            thinking: {
+                startRotateX: 20,
+                midRotateX: -2,
+                startRotateZ: 8,
+                midRotateZ: 3,
+                bounceScale: 1.08,
+                duration: 800,
+                easing: 'easeOutCubic',
+                springEasing: 'spring(1, 100, 15, 0)',
+                bubbleStagger: 120
+            },
+            worried: {
+                startRotateX: 35,
+                midRotateX: -8,
+                startRotateZ: -5,
+                midRotateZ: 3,
+                bounceScale: 1.1,
+                duration: 550,
+                easing: 'easeOutBack',
+                springEasing: 'spring(1, 70, 10, 0)',
+                bubbleStagger: 70
+            },
+            sad: {
+                startRotateX: 15,
+                midRotateX: 0,
+                startRotateZ: 0,
+                midRotateZ: -3,
+                bounceScale: 1.05,
+                duration: 900,
+                easing: 'easeOutQuad',
+                springEasing: 'spring(1, 120, 20, 0)',
+                bubbleStagger: 150
+            }
+        };
+
+        return params[emotion] || params.neutral;
     }
 
     // Hide speech bubble with 3D animation
@@ -705,16 +1460,79 @@ class GuessmatAnimator {
         }, '-=150');
     }
 
-    // Gentle floating animation for the cloud
-    startFloating(cloudShape) {
+    // Gentle floating animation for the cloud with emotion-based intensity
+    startFloating(cloudShape, emotion = 'neutral') {
+        // Emotion-based floating parameters
+        const floatParams = {
+            neutral: { y: 2, rotation: 0.5, duration: 2000 },
+            excited: { y: 4, rotation: 2, duration: 1200 },
+            encouraging: { y: 2.5, rotation: 1, duration: 1800 },
+            thinking: { y: 1.5, rotation: 1.5, duration: 2500 },
+            worried: { y: 3, rotation: 1.5, duration: 1500 },
+            sad: { y: 1, rotation: 0.3, duration: 3000 }
+        };
+
+        const params = floatParams[emotion] || floatParams.neutral;
+
         this.floatAnimation = anime({
             targets: cloudShape,
-            translateY: [-2, 2],
-            rotateZ: [-0.5, 0.5],
-            duration: 2000,
+            translateY: [-params.y, params.y],
+            rotateZ: [-params.rotation, params.rotation],
+            duration: params.duration,
             direction: 'alternate',
             loop: true,
             easing: 'easeInOutSine'
+        });
+    }
+
+    // Subtle pulse animation for bubble while typing
+    bubblePulse(cloudShape) {
+        // Don't interrupt existing pulse
+        if (this.pulseAnimation) return;
+
+        this.pulseAnimation = anime({
+            targets: cloudShape,
+            scale: [1, 1.02, 1],
+            duration: 150,
+            easing: 'easeOutQuad',
+            complete: () => {
+                this.pulseAnimation = null;
+            }
+        });
+    }
+
+    // Mouth talking animation
+    startTalking(mouth) {
+        if (this.talkingAnimation) {
+            this.talkingAnimation.pause();
+        }
+
+        this.talkingAnimation = anime({
+            targets: mouth,
+            scaleY: [1, 1.5, 0.8, 1.3, 1],
+            scaleX: [1, 0.9, 1.1, 0.95, 1],
+            borderRadius: ['0 0 5px 5px', '0 0 8px 8px', '50%', '0 0 6px 6px', '0 0 5px 5px'],
+            duration: 300,
+            loop: true,
+            easing: 'easeInOutQuad'
+        });
+    }
+
+    // Stop mouth animation
+    stopTalking(mouth) {
+        if (this.talkingAnimation) {
+            this.talkingAnimation.pause();
+            this.talkingAnimation = null;
+        }
+
+        // Reset mouth to default state
+        anime({
+            targets: mouth,
+            scaleY: 1,
+            scaleX: 1,
+            borderRadius: '0 0 5px 5px',
+            duration: 200,
+            easing: 'easeOutQuad'
         });
     }
 
@@ -936,11 +1754,71 @@ class Guessmate {
         this.walkInterval = null;
         this.isWalking = false;
         this.animator = null;
+        this.mascotAnimator = null; // New SVG mascot animator
+        this.useSVGMascot = true; // Toggle between old CSS and new SVG mascot
         this.currentSport = typeof currentSport !== 'undefined' ? currentSport : 'HOCKEY';
+        this.playerName = this.getPlayerName();
         this.create();
         // Initialize animator after elements are created
         this.animator = new GuessmatAnimator(this);
+
+        // Initialize SVG mascot animator
+        if (this.useSVGMascot && window.MascotAnimator) {
+            this.mascotAnimator = new MascotAnimator('#guessmate-mascot-container');
+            this.mascotAnimator.loadMascot(this.currentSport);
+        }
+
         this.startIdleWalk();
+
+        // Show personalized greeting after a short delay
+        setTimeout(() => this.greetPlayer(), 500);
+    }
+
+    // Get player name from localStorage
+    getPlayerName() {
+        return localStorage.getItem('yinzordle_playerName') || '';
+    }
+
+    // Personalized greeting for the player
+    greetPlayer() {
+        const messages = this.getMessages();
+        const name = this.playerName;
+
+        if (name) {
+            // Personalized greetings with player name
+            const personalGreetings = {
+                HOCKEY: [
+                    `Hey ${name}! Ready to hit the ice? 🏒`,
+                    `Welcome back, ${name}! Let's score! ⭐`,
+                    `${name}! Let's find that word! 💪`,
+                    `Good to see you, ${name}! Game on! 🏒`
+                ],
+                NFL: [
+                    `${name}! Huddle up, let's play! 🏈`,
+                    `Welcome to the field, ${name}! 🏈`,
+                    `${name}! Ready for kickoff? Let's go!`,
+                    `Hey ${name}! Time to make plays! 💪`
+                ],
+                NBA: [
+                    `${name}! Let's hit the court! 🏀`,
+                    `Welcome back, ${name}! Ball is life! 🏀`,
+                    `${name}! Ready for tip-off? ⭐`,
+                    `Hey ${name}! Let's score big! 💪`
+                ],
+                FA: [
+                    `${name}! Let's hit the pitch! ⚽`,
+                    `Welcome, ${name}! Beautiful game awaits! ⚽`,
+                    `${name}! Ready to score? Let's go!`,
+                    `Hey ${name}! Time to play! 💪`
+                ]
+            };
+
+            const sportGreetings = personalGreetings[this.currentSport] || personalGreetings.HOCKEY;
+            this.say(this.randomMessage(sportGreetings), 4000);
+        } else {
+            // Default greeting if no name
+            this.say(this.randomMessage(messages.greetings), 3000);
+        }
     }
 
     // Get current sport config
@@ -957,6 +1835,26 @@ class Guessmate {
     // Helper to pick a random message from an array
     randomMessage(messages) {
         return messages[Math.floor(Math.random() * messages.length)];
+    }
+
+    // Helper to personalize a message with player name
+    personalize(message) {
+        const name = this.playerName;
+        if (!name) return message;
+
+        // 70% chance to add name to message
+        if (Math.random() > 0.7) return message;
+
+        // Different ways to incorporate the name
+        const patterns = [
+            `${name}, ${message.charAt(0).toLowerCase()}${message.slice(1)}`,
+            `${message.replace('!', `, ${name}!`)}`,
+            `Hey ${name}! ${message}`,
+            `${name}! ${message}`
+        ];
+
+        // Pick a random pattern
+        return patterns[Math.floor(Math.random() * patterns.length)];
     }
 
     // Generate character HTML based on sport
@@ -1086,6 +1984,17 @@ class Guessmate {
         const messages = this.getMessages();
         const initialMessage = `Let's play! ${messages.icon}`;
 
+        // Determine which character system to use
+        const characterHTML = this.useSVGMascot
+            ? `<div class="guessmate-mascot-wrapper" id="guessmate-char">
+                   <div class="guessmate-mascot-container" id="guessmate-mascot-container">
+                       <!-- SVG mascot will be loaded here -->
+                   </div>
+               </div>`
+            : `<div class="guessmate-character sport-${config.sport}" id="guessmate-char">
+                   ${this.generateCharacterHTML(config)}
+               </div>`;
+
         container.innerHTML = `
             <div class="guessmate-speech" id="guessmate-speech">
                 <div class="cloud-shape">
@@ -1103,9 +2012,7 @@ class Guessmate {
                     <div class="bubble bubble-3"></div>
                 </div>
             </div>
-            <div class="guessmate-character sport-${config.sport}" id="guessmate-char">
-                ${this.generateCharacterHTML(config)}
-            </div>
+            ${characterHTML}
         `;
 
         document.body.appendChild(container);
@@ -1113,17 +2020,37 @@ class Guessmate {
         this.speechBubble = document.getElementById('guessmate-speech');
         this.character = document.getElementById('guessmate-char');
 
-        // Apply initial coach colors
-        this.applyCoachColors(config.colors);
+        // Apply initial coach colors (for fallback CSS character)
+        if (!this.useSVGMascot) {
+            this.applyCoachColors(config.colors);
+        }
     }
 
-    say(message, duration = 3000) {
+    say(message, duration = 3000, emotion = null) {
         const speechText = this.speechBubble.querySelector('.speech-text');
-        speechText.textContent = message;
 
-        // Clear any existing timeout
+        // Clear any existing timeouts and typing animation
         if (this.speechTimeout) {
             clearTimeout(this.speechTimeout);
+        }
+        if (this.typingTimeout) {
+            clearTimeout(this.typingTimeout);
+        }
+        if (this.typingInterval) {
+            clearInterval(this.typingInterval);
+        }
+
+        // Detect emotion from message if not provided
+        const detectedEmotion = emotion || this.detectEmotion(message);
+
+        // Apply emotion-based styling to bubble
+        this.applyBubbleEmotion(detectedEmotion);
+
+        // Trigger SVG mascot emotion animation
+        if (this.mascotAnimator && this.mascotAnimator.isLoaded) {
+            // Map detected emotion to mascot state
+            const mascotState = this.mapEmotionToMascotState(detectedEmotion);
+            this.mascotAnimator.setState(mascotState);
         }
 
         // Use Anime.js for 3D speech bubble animation
@@ -1133,22 +2060,155 @@ class Guessmate {
                 this.speechBubble.classList.remove('show');
             }
 
+            // Clear text initially for typing effect
+            speechText.textContent = '';
+            speechText.classList.add('typing');
+
             // Show with 3D animation
-            this.animator.showSpeechBubble(this.speechBubble);
+            this.animator.showSpeechBubble(this.speechBubble, detectedEmotion);
+
+            // Start typing animation after bubble appears
+            this.typingTimeout = setTimeout(() => {
+                this.typeText(speechText, message, () => {
+                    speechText.classList.remove('typing');
+                    // Start mouth idle after typing completes
+                    this.stopMouthAnimation();
+                });
+            }, 400);
+
+            // Start mouth animation while "speaking"
+            this.startMouthAnimation();
+
+            // Calculate duration based on message length + base duration
+            const typingDuration = message.length * 30 + 500;
+            const totalDuration = Math.max(duration, typingDuration + 1500);
 
             // Hide after duration
             this.speechTimeout = setTimeout(() => {
                 this.animator.hideSpeechBubble(this.speechBubble);
-            }, duration);
+                this.removeBubbleEmotion();
+                // Return mascot to idle
+                if (this.mascotAnimator && this.mascotAnimator.isLoaded) {
+                    this.mascotAnimator.setState('idle');
+                }
+            }, totalDuration);
         } else {
-            // Fallback to CSS animation
+            // Fallback to CSS animation (no typing effect)
+            speechText.textContent = message;
             this.speechBubble.classList.remove('show', 'css-animate');
             void this.speechBubble.offsetWidth;
             this.speechBubble.classList.add('show', 'css-animate');
 
             this.speechTimeout = setTimeout(() => {
                 this.speechBubble.classList.remove('show', 'css-animate');
+                this.removeBubbleEmotion();
+                // Return mascot to idle
+                if (this.mascotAnimator && this.mascotAnimator.isLoaded) {
+                    this.mascotAnimator.setState('idle');
+                }
             }, duration);
+        }
+    }
+
+    // Map speech bubble emotion to mascot animation state
+    mapEmotionToMascotState(emotion) {
+        const mapping = {
+            'excited': 'excited',
+            'encouraging': 'encouraging',
+            'thinking': 'thinking',
+            'worried': 'worried',
+            'sad': 'sad',
+            'neutral': 'idle'
+        };
+        return mapping[emotion] || 'idle';
+    }
+
+    // Typing animation for speech text
+    typeText(element, text, onComplete) {
+        let index = 0;
+        const chars = text.split('');
+
+        this.typingInterval = setInterval(() => {
+            if (index < chars.length) {
+                element.textContent += chars[index];
+                index++;
+
+                // Add subtle bounce to bubble on each character
+                if (this.animator && index % 3 === 0) {
+                    this.animator.bubblePulse(this.speechBubble.querySelector('.cloud-shape'));
+                }
+            } else {
+                clearInterval(this.typingInterval);
+                this.typingInterval = null;
+                if (onComplete) onComplete();
+            }
+        }, 30); // 30ms per character
+    }
+
+    // Detect emotion from message content
+    detectEmotion(message) {
+        const lowerMsg = message.toLowerCase();
+
+        // Excited/Happy indicators
+        if (lowerMsg.includes('!') && (lowerMsg.includes('great') || lowerMsg.includes('amazing') ||
+            lowerMsg.includes('perfect') || lowerMsg.includes('genius') || lowerMsg.includes('wow') ||
+            lowerMsg.includes('touchdown') || lowerMsg.includes('goal') || lowerMsg.includes('slam'))) {
+            return 'excited';
+        }
+
+        // Encouraging
+        if (lowerMsg.includes('nice') || lowerMsg.includes('good') || lowerMsg.includes('keep') ||
+            lowerMsg.includes('close') || lowerMsg.includes('almost')) {
+            return 'encouraging';
+        }
+
+        // Thinking
+        if (lowerMsg.includes('hmm') || lowerMsg.includes('🤔') || lowerMsg.includes('interesting') ||
+            lowerMsg.includes('think')) {
+            return 'thinking';
+        }
+
+        // Worried/Concern
+        if (lowerMsg.includes('oops') || lowerMsg.includes('try again') || lowerMsg.includes('not quite') ||
+            lowerMsg.includes('invalid') || lowerMsg.includes('not in')) {
+            return 'worried';
+        }
+
+        // Sad/Lose
+        if (lowerMsg.includes('game over') || lowerMsg.includes('the word was')) {
+            return 'sad';
+        }
+
+        return 'neutral';
+    }
+
+    // Apply emotion-based styling to speech bubble
+    applyBubbleEmotion(emotion) {
+        // Remove any existing emotion classes
+        this.speechBubble.classList.remove('emotion-excited', 'emotion-encouraging',
+            'emotion-thinking', 'emotion-worried', 'emotion-sad', 'emotion-neutral');
+
+        // Add new emotion class
+        this.speechBubble.classList.add(`emotion-${emotion}`);
+    }
+
+    removeBubbleEmotion() {
+        this.speechBubble.classList.remove('emotion-excited', 'emotion-encouraging',
+            'emotion-thinking', 'emotion-worried', 'emotion-sad', 'emotion-neutral');
+    }
+
+    // Mouth animation while speaking
+    startMouthAnimation() {
+        const mouth = this.character.querySelector('.guessmate-mouth');
+        if (mouth && this.animator) {
+            this.animator.startTalking(mouth);
+        }
+    }
+
+    stopMouthAnimation() {
+        const mouth = this.character.querySelector('.guessmate-mouth');
+        if (mouth && this.animator) {
+            this.animator.stopTalking(mouth);
         }
     }
 
@@ -1198,14 +2258,20 @@ class Guessmate {
     onGameStart() {
         this.setMood('excited');
         const messages = this.getMessages();
-        this.say(this.randomMessage(messages.greetings));
+        this.say(this.personalize(this.randomMessage(messages.greetings)));
     }
 
     onLetterTyped(letter, position) {
         const messages = this.getMessages();
+        const name = this.playerName;
         if (position === 0) {
             this.setMood('thinking');
-            const reactions = [
+            const reactions = name ? [
+                `${letter}... interesting start, ${name}!`,
+                `Ooh ${name}, starting with ${letter}!`,
+                `${letter}? Nice choice, ${name}!`,
+                `${name} goes with ${letter}... 🤔`
+            ] : [
                 `${letter}... interesting start!`,
                 `Ooh, starting with ${letter}!`,
                 `${letter}, nice choice!`
@@ -1213,35 +2279,48 @@ class Guessmate {
             this.say(this.randomMessage(reactions), 1500);
         } else if (position === 4) {
             this.setMood('excited');
-            this.say(`Full word! Hit Enter! ${messages.icon}`, 2000);
+            const fullWordMsg = name
+                ? `Full word, ${name}! Hit Enter! ${messages.icon}`
+                : `Full word! Hit Enter! ${messages.icon}`;
+            this.say(fullWordMsg, 2000);
         }
     }
 
     onLetterDeleted() {
-        const reactions = [
+        const name = this.playerName;
+        const reactions = name ? [
+            `Changed your mind, ${name}? No worries!`,
+            `Rethinking, ${name}? Smart move!`,
+            `${name}'s reconsidering... I like it!`
+        ] : [
             "Changed your mind? No worries!",
             "Backspace is your friend!",
             "Rethinking... smart move!"
         ];
         if (Math.random() < 0.3) {
-            this.say(reactions[Math.floor(Math.random() * reactions.length)], 1500);
+            this.say(this.randomMessage(reactions), 1500);
         }
     }
 
     onInvalidWord() {
         this.setMood('worried');
         const messages = this.getMessages();
-        this.say(this.randomMessage(messages.invalidWord));
+        this.say(this.personalize(this.randomMessage(messages.invalidWord)));
     }
 
     onNotEnoughLetters() {
         this.setMood('thinking');
-        const reactions = [
+        const name = this.playerName;
+        const reactions = name ? [
+            `Need 5 letters, ${name}!`,
+            `Keep typing, ${name}! Almost there!`,
+            `${name}, few more letters needed! ✍️`
+        ] : [
             "Need 5 letters, buddy!",
             "Keep typing! Almost there!",
             "Few more letters needed! ✍️"
         ];
-        this.say(reactions[Math.floor(Math.random() * reactions.length)]);
+        this.say(this.randomMessage(reactions));
     }
 
     onGuessResult(correctCount, presentCount, absentCount, attempt) {
@@ -1251,27 +2330,32 @@ class Guessmate {
         }
 
         const messages = this.getMessages();
+        const name = this.playerName;
 
         if (correctCount >= 3) {
             this.setMood('excited');
-            const closeMessages = [`${correctCount} green! ${this.randomMessage(messages.closeToWin)}`];
-            this.say(this.randomMessage(closeMessages.concat(messages.closeToWin)));
+            const baseMsg = this.randomMessage(messages.closeToWin);
+            const personalMsg = name
+                ? `${correctCount} green, ${name}! ${baseMsg}`
+                : `${correctCount} green! ${baseMsg}`;
+            this.say(personalMsg);
         } else if (correctCount >= 1 || presentCount >= 2) {
             this.setMood('happy');
-            this.say(this.randomMessage(messages.goodProgress));
+            this.say(this.personalize(this.randomMessage(messages.goodProgress)));
         } else if (presentCount >= 1) {
             this.setMood('thinking');
-            this.say(this.randomMessage(messages.yellowHints));
+            this.say(this.personalize(this.randomMessage(messages.yellowHints)));
         } else {
             this.setMood('worried');
-            this.say(this.randomMessage(messages.noMatch));
+            this.say(this.personalize(this.randomMessage(messages.noMatch)));
         }
 
         // Extra encouragement on later attempts
         if (attempt >= 4 && correctCount < 3) {
             setTimeout(() => {
                 this.setMood('determined');
-                this.say(this.randomMessage(messages.lateGame));
+                const lateMsg = this.randomMessage(messages.lateGame);
+                this.say(name ? `${name}, ${lateMsg.toLowerCase()}` : lateMsg);
             }, 3500);
         }
     }
@@ -1280,7 +2364,51 @@ class Guessmate {
         this.stopWalking();
         this.setMood('celebrating');
         const messages = this.getMessages();
-        const winMessage = messages.win[attempts] || `YOU WON! ${messages.icon}`;
+        const name = this.playerName;
+        const sport = this.currentSport;
+        let winMessage = messages.win[attempts] || `YOU WON! ${messages.icon}`;
+
+        // Sport-specific personalized win messages
+        if (name) {
+            const sportWinMessages = {
+                HOCKEY: {
+                    1: `INCREDIBLE ${name.toUpperCase()}! First try?! Hat trick legend! 🏆🏒`,
+                    2: `AMAZING ${name.toUpperCase()}! Two tries! All-star player! 🥇`,
+                    3: `FANTASTIC, ${name}! You're skating circles around this! 🌟`,
+                    4: `NICE ONE, ${name}! Solid performance on the ice! 🏒`,
+                    5: `GOOD JOB, ${name}! You figured it out, champ! 👏`,
+                    6: `PHEW ${name}! Overtime winner! Never gave up! 💪`
+                },
+                NFL: {
+                    1: `TOUCHDOWN ${name.toUpperCase()}! First try?! MVP status! 🏆🏈`,
+                    2: `AMAZING ${name.toUpperCase()}! Two tries! Pro Bowl material! 🥇`,
+                    3: `FANTASTIC, ${name}! That's a game-winning drive! 🌟`,
+                    4: `NICE ONE, ${name}! Solid play calling! 🏈`,
+                    5: `GOOD JOB, ${name}! You ran it into the end zone! 👏`,
+                    6: `PHEW ${name}! Hail Mary completed! Never gave up! 💪`
+                },
+                NBA: {
+                    1: `SLAM DUNK ${name.toUpperCase()}! First try?! Hall of Famer! 🏆🏀`,
+                    2: `AMAZING ${name.toUpperCase()}! Two tries! All-NBA team! 🥇`,
+                    3: `FANTASTIC, ${name}! Nothing but net! 🌟`,
+                    4: `NICE ONE, ${name}! Clutch shooting! 🏀`,
+                    5: `GOOD JOB, ${name}! You hit the buzzer beater! 👏`,
+                    6: `PHEW ${name}! Game 7 winner! Never gave up! 💪`
+                },
+                FA: {
+                    1: `GOOOAL ${name.toUpperCase()}! First try?! World class! 🏆⚽`,
+                    2: `AMAZING ${name.toUpperCase()}! Two tries! Ballon d'Or worthy! 🥇`,
+                    3: `FANTASTIC, ${name}! Top corner finish! 🌟`,
+                    4: `NICE ONE, ${name}! Clinical finish! ⚽`,
+                    5: `GOOD JOB, ${name}! You found the back of the net! 👏`,
+                    6: `PHEW ${name}! Last minute winner! Never gave up! 💪`
+                }
+            };
+
+            const sportMessages = sportWinMessages[sport] || sportWinMessages.HOCKEY;
+            winMessage = sportMessages[attempts] || `${name.toUpperCase()} WINS! ${messages.icon}`;
+        }
+
         this.say(winMessage, 5000);
     }
 
@@ -1288,7 +2416,41 @@ class Guessmate {
         this.stopWalking();
         this.setMood('sad');
         const messages = this.getMessages();
-        const loseMessage = `The word was ${word}. ${this.randomMessage(messages.lose)}`;
+        const name = this.playerName;
+        const sport = this.currentSport;
+
+        // Sport-specific personalized lose messages
+        let loseMessage;
+        if (name) {
+            const sportLoseMessages = {
+                HOCKEY: [
+                    `The word was ${word}. ${name}, we'll get 'em next period!`,
+                    `${word} was the answer. Shake it off, ${name}! Next shift!`,
+                    `It was ${word}. ${name}, even Gretzky had bad games! 🏒`
+                ],
+                NFL: [
+                    `The word was ${word}. ${name}, we'll come back stronger next drive!`,
+                    `${word} was the play. ${name}, time to regroup in the huddle!`,
+                    `It was ${word}. ${name}, even Brady threw interceptions! 🏈`
+                ],
+                NBA: [
+                    `The word was ${word}. ${name}, we'll bounce back next quarter!`,
+                    `${word} was the shot. ${name}, even MJ missed sometimes!`,
+                    `It was ${word}. ${name}, trust the process! 🏀`
+                ],
+                FA: [
+                    `The word was ${word}. ${name}, we go again next match!`,
+                    `${word} was it. ${name}, even Messi misses penalties!`,
+                    `It was ${word}. ${name}, keep your head up! ⚽`
+                ]
+            };
+
+            const sportMessages = sportLoseMessages[sport] || sportLoseMessages.HOCKEY;
+            loseMessage = this.randomMessage(sportMessages);
+        } else {
+            loseMessage = `The word was ${word}. ${this.randomMessage(messages.lose)}`;
+        }
+
         this.say(loseMessage, 5000);
     }
 
@@ -1296,7 +2458,9 @@ class Guessmate {
         this.setMood('excited');
         this.startIdleWalk();
         const messages = this.getMessages();
-        this.say(this.randomMessage(messages.newGame));
+        const name = this.playerName;
+        const newGameMsg = this.randomMessage(messages.newGame);
+        this.say(name ? `${name}! ${newGameMsg}` : newGameMsg);
     }
 
     reset() {
@@ -1548,6 +2712,15 @@ class HockeyWordle {
     }
 
     bindEvents() {
+        // Initialize sound effects on first user interaction
+        const initSoundOnInteraction = () => {
+            soundEffects.init();
+            document.removeEventListener('click', initSoundOnInteraction);
+            document.removeEventListener('keydown', initSoundOnInteraction);
+        };
+        document.addEventListener('click', initSoundOnInteraction);
+        document.addEventListener('keydown', initSoundOnInteraction);
+
         // Physical keyboard
         document.addEventListener("keydown", (e) => {
             // Admin shortcut: Ctrl+Shift+A (word list)
@@ -1577,8 +2750,17 @@ class HockeyWordle {
 
         // New game button
         document.getElementById("new-game").addEventListener("click", () => {
+            soundEffects.init();
             this.resetGame();
         });
+
+        // Quit button - go back to landing page
+        const quitBtn = document.getElementById("quit-btn");
+        if (quitBtn) {
+            quitBtn.addEventListener("click", () => {
+                window.location.href = 'landing.html';
+            });
+        }
     }
 
     initSportSelector() {
@@ -1633,7 +2815,16 @@ class HockeyWordle {
         const sportConfig = typeof SPORT_CONFIG !== 'undefined' ? SPORT_CONFIG[sport] : null;
         if (sportConfig) {
             this.showMessage(`Switched to ${sportConfig.name} ${sportConfig.icon}`, "info");
+
+            // Update subtitle to reflect current sport
+            const subtitle = document.querySelector('.subtitle');
+            if (subtitle) {
+                subtitle.textContent = `Guess the 5-letter ${sportConfig.name} word!`;
+            }
         }
+
+        // Save sport preference
+        localStorage.setItem('yinzordle_sport', sport);
     }
 
     toggleAdminPanel() {
@@ -1733,6 +2924,7 @@ class HockeyWordle {
         if (this.currentGuess.length !== this.wordLength) {
             this.showMessage("Not enough letters!", "error");
             this.shakeRow();
+            soundEffects.playErrorSound();
             this.guessmate.onNotEnoughLetters();
             return;
         }
@@ -1740,6 +2932,7 @@ class HockeyWordle {
         if (!this.isValidWord(this.currentGuess)) {
             this.showMessage("Not a valid word!", "error");
             this.shakeRow();
+            soundEffects.playErrorSound();
             this.guessmate.onInvalidWord();
             return;
         }
@@ -1789,15 +2982,23 @@ class HockeyWordle {
         const presentCount = result.filter(r => r === "present").length;
         const absentCount = result.filter(r => r === "absent").length;
 
-        // Animate the reveal
+        // Animate the reveal with sound effects
         for (let i = 0; i < this.wordLength; i++) {
             setTimeout(() => {
                 const tile = document.getElementById(`tile-${this.currentRow}-${i}`);
                 tile.classList.add("reveal");
 
+                // Play tile flip sound
+                soundEffects.playFlipSound(i);
+
                 setTimeout(() => {
                     tile.classList.add(result[i]);
                     this.updateKeyboard(guessArray[i], result[i]);
+
+                    // Play correct sound for green tiles
+                    if (result[i] === 'correct') {
+                        soundEffects.playCorrectSound();
+                    }
                 }, 250);
 
                 // Check for win/lose after last tile
@@ -1831,14 +3032,8 @@ class HockeyWordle {
     checkGameEnd() {
         if (this.currentGuess === this.targetWord) {
             this.gameOver = true;
-            const messages = [
-                "🏆 HAT TRICK! Genius!",
-                "🥅 TOP SHELF! Amazing!",
-                "🏒 GREAT SNIPE!",
-                "💪 SOLID PLAY!",
-                "😅 CLOSE CALL!",
-                "🎯 JUST MADE IT!"
-            ];
+            const sport = typeof currentSport !== 'undefined' ? currentSport : 'HOCKEY';
+            const messages = this.getSportWinMessages(sport);
             this.showMessage(messages[this.currentRow], "win");
             this.guessmate.onWin(this.currentRow + 1);
             this.showResultModal("win", messages[this.currentRow]);
@@ -1868,38 +3063,259 @@ class HockeyWordle {
         }
     }
 
-    createSnowfall() {
-        const snowContainer = document.createElement("div");
-        snowContainer.className = "snow-container";
-        snowContainer.id = "snow-container";
-
-        // Create snowflakes
-        for (let i = 0; i < 50; i++) {
-            const snowflake = document.createElement("div");
-            snowflake.className = "snowflake";
-            snowflake.innerHTML = "❄";
-            snowflake.style.left = Math.random() * 100 + "%";
-            snowflake.style.animationDuration = (Math.random() * 3 + 2) + "s";
-            snowflake.style.animationDelay = Math.random() * 2 + "s";
-            snowflake.style.fontSize = (Math.random() * 15 + 10) + "px";
-            snowflake.style.opacity = Math.random() * 0.7 + 0.3;
-            snowContainer.appendChild(snowflake);
-        }
-
-        document.body.appendChild(snowContainer);
+    // Sport-specific particle configurations
+    getSportParticles(sport) {
+        const particles = {
+            HOCKEY: {
+                icons: ['❄', '❄', '❄', '🏒', '🥅'],
+                colors: ['#87ceeb', '#ffffff', '#b0e0e6'],
+                name: 'snowflakes'
+            },
+            NFL: {
+                icons: ['🏈', '🏈', '🏈', '🎉', '⭐'],
+                colors: ['#8b4513', '#ffd700', '#ffffff'],
+                name: 'footballs'
+            },
+            NBA: {
+                icons: ['🏀', '🏀', '🏀', '🎉', '⭐'],
+                colors: ['#ff6b35', '#ffd700', '#ffffff'],
+                name: 'basketballs'
+            },
+            FA: {
+                icons: ['⚽', '⚽', '⚽', '🎉', '🌿'],
+                colors: ['#228b22', '#ffffff', '#ffd700'],
+                name: 'soccer balls'
+            }
+        };
+        return particles[sport] || particles.HOCKEY;
     }
 
-    removeSnowfall() {
-        const snowContainer = document.getElementById("snow-container");
-        if (snowContainer) {
-            snowContainer.remove();
+    createSportParticles() {
+        const sport = typeof currentSport !== 'undefined' ? currentSport : 'HOCKEY';
+        const particleConfig = this.getSportParticles(sport);
+
+        const container = document.createElement("div");
+        container.className = "particle-container";
+        container.id = "particle-container";
+
+        // Create particles
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement("div");
+            particle.className = "sport-particle";
+
+            // Pick a random icon from the sport's set
+            const iconIndex = Math.floor(Math.random() * particleConfig.icons.length);
+            particle.innerHTML = particleConfig.icons[iconIndex];
+
+            particle.style.left = Math.random() * 100 + "%";
+            particle.style.animationDuration = (Math.random() * 3 + 2) + "s";
+            particle.style.animationDelay = Math.random() * 2 + "s";
+            particle.style.fontSize = (Math.random() * 15 + 10) + "px";
+            particle.style.opacity = Math.random() * 0.7 + 0.3;
+
+            // Add some rotation for non-snowflake sports
+            if (sport !== 'HOCKEY') {
+                particle.style.setProperty('--rotation', (Math.random() * 360) + 'deg');
+            }
+
+            container.appendChild(particle);
+        }
+
+        document.body.appendChild(container);
+    }
+
+    removeParticles() {
+        const container = document.getElementById("particle-container");
+        if (container) {
+            container.remove();
+        }
+    }
+
+    // Get sport-specific win messages (based on number of guesses)
+    getSportWinMessages(sport) {
+        const messages = {
+            HOCKEY: [
+                "🏆 HAT TRICK! Genius!",
+                "🥅 TOP SHELF! Amazing!",
+                "🏒 GREAT SNIPE!",
+                "💪 SOLID PLAY!",
+                "😅 CLOSE CALL!",
+                "🎯 JUST MADE IT!"
+            ],
+            NFL: [
+                "🏆 HAIL MARY! Genius!",
+                "🏈 TOUCHDOWN! Amazing!",
+                "🎯 PERFECT SPIRAL!",
+                "💪 STRONG DRIVE!",
+                "😅 CLOSE CALL!",
+                "🏟️ JUST MADE IT!"
+            ],
+            NBA: [
+                "🏆 BUZZER BEATER! Genius!",
+                "🏀 SLAM DUNK! Amazing!",
+                "🎯 NOTHING BUT NET!",
+                "💪 GREAT SHOT!",
+                "😅 CLOSE CALL!",
+                "🏟️ JUST MADE IT!"
+            ],
+            FA: [
+                "🏆 WORLD CLASS! Genius!",
+                "⚽ TOP BINS! Amazing!",
+                "🎯 SCREAMER!",
+                "💪 CLINICAL FINISH!",
+                "😅 CLOSE CALL!",
+                "🏟️ JUST MADE IT!"
+            ]
+        };
+        return messages[sport] || messages.HOCKEY;
+    }
+
+    // Get sport-specific modal configuration
+    getSportModalConfig(sport) {
+        const configs = {
+            HOCKEY: {
+                winTitle: 'GOAL!',
+                loseTitle: 'Keep Skating!',
+                winSubMessage: "You're a hockey word champion!",
+                loseSubMessage: 'Every pro started as a rookie. Try again!',
+                icon: '🏒',
+                accessory: 'hockey-stick',
+                buttonIcon: '🏒'
+            },
+            NFL: {
+                winTitle: 'TOUCHDOWN!',
+                loseTitle: 'Keep Fighting!',
+                winSubMessage: "You're a football word MVP!",
+                loseSubMessage: 'Champions bounce back stronger. Try again!',
+                icon: '🏈',
+                accessory: 'football',
+                buttonIcon: '🏈'
+            },
+            NBA: {
+                winTitle: 'SLAM DUNK!',
+                loseTitle: 'Keep Balling!',
+                winSubMessage: "You're a basketball word all-star!",
+                loseSubMessage: 'Even legends miss sometimes. Try again!',
+                icon: '🏀',
+                accessory: 'basketball',
+                buttonIcon: '🏀'
+            },
+            FA: {
+                winTitle: 'GOOOAL!',
+                loseTitle: 'Keep Playing!',
+                winSubMessage: "You're a football word legend!",
+                loseSubMessage: 'The beautiful game rewards persistence!',
+                icon: '⚽',
+                accessory: 'soccer-ball',
+                buttonIcon: '⚽'
+            }
+        };
+        return configs[sport] || configs.HOCKEY;
+    }
+
+    // Generate sport-specific character HTML for modal
+    generateModalCharacter(sport, type) {
+        const accessoryMap = {
+            HOCKEY: '<div class="sport-accessory hockey-stick"></div>',
+            NFL: '<div class="sport-accessory football"></div>',
+            NBA: '<div class="sport-accessory basketball"></div>',
+            FA: '<div class="sport-accessory soccer-ball"></div>'
+        };
+
+        const accessoryHTML = accessoryMap[sport] || accessoryMap.HOCKEY;
+
+        if (type === "win") {
+            return `
+                <div class="character-body win sport-${sport.toLowerCase()}">
+                    <div class="character-head">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="mouth happy"></div>
+                    </div>
+                    <div class="character-arms">
+                        <div class="arm left raised"></div>
+                        <div class="arm right raised"></div>
+                    </div>
+                    ${accessoryHTML}
+                </div>
+            `;
+        } else {
+            return `
+                <div class="character-body lose sport-${sport.toLowerCase()}">
+                    <div class="character-head">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="mouth determined"></div>
+                    </div>
+                    <div class="character-arms">
+                        <div class="arm left"></div>
+                        <div class="arm right fist"></div>
+                    </div>
+                    ${accessoryHTML}
+                </div>
+            `;
         }
     }
 
     showResultModal(type, message) {
-        // Start snowfall if enabled
-        if (settingsManager.settings.modal.snowEnabled) {
-            this.createSnowfall();
+        const sport = typeof currentSport !== 'undefined' ? currentSport : 'HOCKEY';
+        const modalConfig = this.getSportModalConfig(sport);
+
+        // Initialize and play sound effects
+        soundEffects.init();
+
+        // Create dramatic entrance effects based on result type
+        if (type === "win") {
+            // WIN CELEBRATION SEQUENCE
+            // 1. Screen flash
+            celebrationEffects.createScreenFlash('win');
+
+            // 2. Play triumphant win sound
+            setTimeout(() => {
+                soundEffects.playWinSound();
+            }, 100);
+
+            // 3. Shockwave rings
+            setTimeout(() => {
+                celebrationEffects.createShockwaveRings(3);
+            }, 200);
+
+            // 4. Sport-specific celebration effects
+            setTimeout(() => {
+                if (sport === 'NFL') {
+                    // NFL gets fireworks show!
+                    celebrationEffects.createFireworksShow(8);
+                } else if (sport === 'HOCKEY') {
+                    // Hockey gets ice/snow celebration
+                    celebrationEffects.createHockeyCelebration();
+                } else if (sport === 'NBA') {
+                    // NBA gets slam dunk celebration
+                    celebrationEffects.createNBACelebration();
+                } else if (sport === 'FA') {
+                    // Football/Soccer gets streamer celebration
+                    celebrationEffects.createFACelebration();
+                } else {
+                    // Default confetti
+                    celebrationEffects.createConfettiExplosion(sport);
+                }
+            }, 300);
+
+        } else {
+            // LOSE - More subdued but still encouraging
+            celebrationEffects.createScreenFlash('lose');
+
+            setTimeout(() => {
+                soundEffects.playLoseSound();
+            }, 100);
+
+            setTimeout(() => {
+                celebrationEffects.createShockwave('lose');
+            }, 150);
+
+            // Gentle falling particles for lose state using canvas-confetti
+            setTimeout(() => {
+                celebrationEffects.createLoseEffect(sport);
+            }, 300);
         }
 
         const modal = document.createElement("div");
@@ -1907,44 +3323,13 @@ class HockeyWordle {
         modal.id = "result-modal";
 
         const content = document.createElement("div");
-        content.className = `result-content ${type}`;
+        content.className = `result-content ${type} sport-${sport.toLowerCase()}`;
 
         // 3D Character (if enabled)
         if (settingsManager.settings.modal.characterEnabled) {
             const character = document.createElement("div");
             character.className = `result-character ${type}`;
-
-            if (type === "win") {
-                character.innerHTML = `
-                    <div class="character-body win">
-                        <div class="character-head">
-                            <div class="eye left"></div>
-                            <div class="eye right"></div>
-                            <div class="mouth happy"></div>
-                        </div>
-                        <div class="character-arms">
-                            <div class="arm left raised"></div>
-                            <div class="arm right raised"></div>
-                        </div>
-                        <div class="hockey-stick"></div>
-                    </div>
-                `;
-            } else {
-                character.innerHTML = `
-                    <div class="character-body lose">
-                        <div class="character-head">
-                            <div class="eye left"></div>
-                            <div class="eye right"></div>
-                            <div class="mouth determined"></div>
-                        </div>
-                        <div class="character-arms">
-                            <div class="arm left"></div>
-                            <div class="arm right fist"></div>
-                        </div>
-                        <div class="hockey-stick"></div>
-                    </div>
-                `;
-            }
+            character.innerHTML = this.generateModalCharacter(sport, type);
             content.appendChild(character);
         }
 
@@ -1954,15 +3339,15 @@ class HockeyWordle {
 
         if (type === "win") {
             messageDiv.innerHTML = `
-                <h2>GOAL! 🎉</h2>
+                <h2>${modalConfig.winTitle} ${modalConfig.icon}</h2>
                 <p>${message}</p>
-                <p class="sub-message">You're a hockey word champion!</p>
+                <p class="sub-message">${modalConfig.winSubMessage}</p>
             `;
         } else {
             messageDiv.innerHTML = `
-                <h2>Keep Skating! 💪</h2>
+                <h2>${modalConfig.loseTitle} 💪</h2>
                 <p>The word was: <strong>${message}</strong></p>
-                <p class="sub-message">Every pro started as a rookie. Try again!</p>
+                <p class="sub-message">${modalConfig.loseSubMessage}</p>
             `;
         }
         content.appendChild(messageDiv);
@@ -1970,8 +3355,9 @@ class HockeyWordle {
         // Play Again Button
         const playAgainBtn = document.createElement("button");
         playAgainBtn.className = "play-again-btn";
-        playAgainBtn.textContent = type === "win" ? "Play Again! 🏒" : "Try Again! 🏒";
+        playAgainBtn.textContent = type === "win" ? `Play Again! ${modalConfig.buttonIcon}` : `Try Again! ${modalConfig.buttonIcon}`;
         playAgainBtn.addEventListener("click", () => {
+            soundEffects.playKeySound(); // Click feedback
             this.closeResultModal();
             this.resetGame();
         });
@@ -1980,10 +3366,10 @@ class HockeyWordle {
         modal.appendChild(content);
         document.body.appendChild(modal);
 
-        // Animate in
+        // Animate in with slight delay for effects to start
         setTimeout(() => {
             modal.classList.add("show");
-        }, 100);
+        }, 150);
     }
 
     closeResultModal() {
@@ -1992,9 +3378,10 @@ class HockeyWordle {
             modal.classList.remove("show");
             setTimeout(() => {
                 modal.remove();
-            }, 300);
+            }, 400); // Slightly longer for smoother exit
         }
-        this.removeSnowfall();
+        this.removeParticles();
+        celebrationEffects.cleanup();
     }
 
     showMessage(text, type = "") {
@@ -2159,6 +3546,28 @@ class HelpModal {
 
 // Start the game when page loads
 document.addEventListener("DOMContentLoaded", () => {
+    // Load saved sport from landing page
+    const savedSport = localStorage.getItem('yinzordle_sport');
+    if (savedSport && typeof switchSport === 'function') {
+        switchSport(savedSport);
+        // Update sport selector button to show active state
+        const sportButtons = document.querySelectorAll('.sport-btn');
+        sportButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.sport === savedSport) {
+                btn.classList.add('active');
+            }
+        });
+        // Update subtitle
+        const sportConfig = typeof SPORT_CONFIG !== 'undefined' ? SPORT_CONFIG[savedSport] : null;
+        if (sportConfig) {
+            const subtitle = document.querySelector('.subtitle');
+            if (subtitle) {
+                subtitle.textContent = `Guess the 5-letter ${sportConfig.name} word!`;
+            }
+        }
+    }
+
     window.themeController = new ThemeController();
     new HockeyWordle();
     new HelpModal();
