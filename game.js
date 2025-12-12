@@ -1136,13 +1136,6 @@ class SettingsManager {
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
-                    <div class="setting-row">
-                        <label>Show Character</label>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="setting-character-enabled" ${this.settings.modal.characterEnabled ? 'checked' : ''}>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
                 </div>
 
                 <!-- Font Section -->
@@ -1250,7 +1243,6 @@ class SettingsManager {
         this.settings.modal.winColor = this.panel.querySelector('#setting-win-color').value;
         this.settings.modal.loseColor = this.panel.querySelector('#setting-lose-color').value;
         this.settings.modal.snowEnabled = this.panel.querySelector('#setting-snow-enabled').checked;
-        this.settings.modal.characterEnabled = this.panel.querySelector('#setting-character-enabled').checked;
 
         this.settings.font.family = this.panel.querySelector('#setting-font-family').value;
         this.settings.font.titleSize = this.panel.querySelector('#setting-title-size').value;
@@ -3378,28 +3370,29 @@ class HockeyWordle {
         const content = document.createElement("div");
         content.className = `result-content ${type} sport-${sport.toLowerCase()}`;
 
-        // 3D Character (if enabled)
-        if (settingsManager.settings.modal.characterEnabled) {
-            const character = document.createElement("div");
-            character.className = `result-character ${type}`;
-            character.innerHTML = this.generateModalCharacter(sport, type);
-            content.appendChild(character);
-        }
+        // Get player name for personalized message
+        const playerName = this.playerName || 'Champion';
 
-        // Message
+        // Message with congratulations
         const messageDiv = document.createElement("div");
         messageDiv.className = "result-message";
 
         if (type === "win") {
+            const guessText = this.currentRow === 1 ? '1 guess' : `${this.currentRow} guesses`;
             messageDiv.innerHTML = `
-                <h2>${modalConfig.winTitle} ${modalConfig.icon}</h2>
-                <p>${message}</p>
+                <div class="result-icon">${modalConfig.icon}</div>
+                <h2>${modalConfig.winTitle}</h2>
+                <p class="congrats-name">Congratulations, ${playerName}! 🎉</p>
+                <p class="result-detail">${message}</p>
+                <p class="guess-count">You got it in <strong>${guessText}</strong>!</p>
                 <p class="sub-message">${modalConfig.winSubMessage}</p>
             `;
         } else {
             messageDiv.innerHTML = `
-                <h2>${modalConfig.loseTitle} 💪</h2>
-                <p>The word was: <strong>${message}</strong></p>
+                <div class="result-icon">💪</div>
+                <h2>${modalConfig.loseTitle}</h2>
+                <p class="congrats-name">Don't give up, ${playerName}!</p>
+                <p class="result-detail">The word was: <strong>${message}</strong></p>
                 <p class="sub-message">${modalConfig.loseSubMessage}</p>
             `;
         }
