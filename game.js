@@ -2491,7 +2491,6 @@ class HockeyWordle {
         this.bindEvents();
         this.bindSportSelector();
         this.guessmate = new Guessmate();
-        setTimeout(() => this.guessmate.onGameStart(), 500);
 
         // Apply saved settings
         settingsManager.apply();
@@ -2516,6 +2515,51 @@ class HockeyWordle {
                 }
             }
         });
+
+        // Check if user needs onboarding (first-time players)
+        this.checkOnboarding();
+    }
+
+    /**
+     * Check if onboarding should be shown to first-time users
+     */
+    checkOnboarding() {
+        if (!OnboardingManager.isComplete()) {
+            // First-time user - show onboarding
+            this.onboarding = new OnboardingManager({
+                mascotPath: './mascots/',
+                onComplete: () => {
+                    // Start game after onboarding
+                    this.guessmate.onGameStart();
+                },
+                onSkip: () => {
+                    // Also start game if skipped
+                },
+                onStepChange: (step, stepData) => {
+                    // Optional: sync mascot emotions
+                }
+            });
+            this.onboarding.show();
+        } else {
+            // Returning user - start game immediately
+            setTimeout(() => this.guessmate.onGameStart(), 500);
+        }
+    }
+
+    /**
+     * Show onboarding again (can be triggered from help)
+     */
+    showOnboarding() {
+        if (!this.onboarding) {
+            this.onboarding = new OnboardingManager({
+                mascotPath: './mascots/',
+                onComplete: () => {},
+                onSkip: () => {}
+            });
+        }
+        // Reset completion status temporarily to show all steps
+        OnboardingManager.reset();
+        this.onboarding.show();
     }
 
     checkMobile() {
@@ -3552,6 +3596,7 @@ class HelpModal {
         this.modal = document.getElementById('help-modal');
         this.openBtn = document.getElementById('help-btn');
         this.closeBtn = document.getElementById('help-close');
+        this.tutorialBtn = document.getElementById('view-tutorial-btn');
         this.bindEvents();
     }
 
@@ -3566,6 +3611,16 @@ class HelpModal {
             this.modal.addEventListener('click', (e) => {
                 if (e.target === this.modal) {
                     this.close();
+                }
+            });
+        }
+        // View Tutorial button - opens full onboarding
+        if (this.tutorialBtn) {
+            this.tutorialBtn.addEventListener('click', () => {
+                this.close();
+                // Trigger onboarding from game instance
+                if (window.gameInstance && window.gameInstance.showOnboarding) {
+                    window.gameInstance.showOnboarding();
                 }
             });
         }
@@ -3615,6 +3670,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     window.themeController = new ThemeController();
-    new HockeyWordle();
+    window.gameInstance = new HockeyWordle();
     new HelpModal();
 });

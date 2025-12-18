@@ -68,6 +68,11 @@
     box-sizing: border-box;
 }
 
+/* Prevent zoom on mobile */
+html {
+    touch-action: manipulation;
+}
+
 body {
     font-family: var(--font-family);
     background: var(--bg-color);
@@ -79,6 +84,9 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.3s ease;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
 }
 
 body.theme-transition,
@@ -3103,6 +3111,31 @@ header {
     color: var(--text-secondary);
     font-size: 0.75rem;
     margin: 0;
+}
+
+/* View Tutorial Button in Help Modal */
+.view-tutorial-btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0062cc 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+}
+
+.view-tutorial-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.view-tutorial-btn:active {
+    transform: translateY(0);
 }
 
 /* Settings Panel */

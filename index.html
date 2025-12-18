@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>YINZORDLE</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="onboarding.css">
     <script>
         // Redirect to landing page if user hasn't entered their name
         if (!localStorage.getItem('yinzordle_playerName')) {
@@ -99,6 +100,7 @@
                         <p>Gray = Letter not in word</p>
                     </div>
                 </div>
+                <button id="view-tutorial-btn" class="view-tutorial-btn">View Full Tutorial</button>
             </div>
         </div>
     </div>
@@ -111,6 +113,7 @@
     <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.8/dist/lottie-player.js"></script>
     <script src="words.js"></script>
     <script src="mascot.js"></script>
+    <script src="onboarding.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
